@@ -12,17 +12,12 @@ template <typename Block, typename Writer, typename MemoryPolicy>
 class BlockOutputStream : public Writer, public MemoryPolicy
 {
 public:
-    using BlockType = Block;
-    using BlockPtr  = Block*;
-    using Iterator  = typename Block::iterator;
-    using ValueType = typename Block::value_type;
-
     void Open();
     void Close();
 
-    void Push(const ValueType& value);
-    void PushBlock(BlockPtr block);
-    void WriteBlock(BlockPtr block);
+    void Push(const typename Block::value_type& value);
+    void PushBlock(Block* block);
+    void WriteBlock(Block* block);
 
 private:
     void OutputLoop();
@@ -31,9 +26,9 @@ private:
 
     mutable std::condition_variable cv_;
     mutable std::mutex mtx_;
-    std::queue<BlockPtr> blocks_queue_;
+    std::queue<Block*> blocks_queue_;
 
-    BlockPtr block_ = {nullptr};
+    Block* block_ = {nullptr};
 
     std::thread toutput_;
     std::atomic<bool> stopped_ = {false};
@@ -59,7 +54,7 @@ void BlockOutputStream<Block, Writer, MemoryPolicy>::Close()
 
 template <typename Block, typename Writer, typename MemoryPolicy>
 void BlockOutputStream<Block, Writer, MemoryPolicy>::Push(
-    const ValueType& value)
+    const typename Block::value_type& value)
 {
     if (!block_) {
         block_ = MemoryPolicy::Allocate();
@@ -75,7 +70,7 @@ void BlockOutputStream<Block, Writer, MemoryPolicy>::Push(
 
 template <typename Block, typename Writer, typename MemoryPolicy>
 void BlockOutputStream<Block, Writer, MemoryPolicy>::PushBlock(
-    BlockPtr block)
+    Block* block)
 {
     if (block) {
         std::unique_lock<std::mutex> lck(mtx_);
@@ -94,7 +89,7 @@ void BlockOutputStream<Block, Writer, MemoryPolicy>::OutputLoop()
         }
 
         if (!blocks_queue_.empty()) {
-            BlockPtr block = blocks_queue_.front();
+            Block* block = blocks_queue_.front();
             blocks_queue_.pop();
             lck.unlock();
 
@@ -107,7 +102,7 @@ void BlockOutputStream<Block, Writer, MemoryPolicy>::OutputLoop()
 
 template <typename Block, typename Writer, typename MemoryPolicy>
 void BlockOutputStream<Block, Writer, MemoryPolicy>::WriteBlock(
-    BlockPtr block)
+    Block* block)
 {
     Writer::Write(block);
     MemoryPolicy::Free(block);

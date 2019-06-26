@@ -12,18 +12,16 @@ template <typename Block, typename Reader, typename MemoryPolicy>
 class BlockInputStream : public Reader, public MemoryPolicy
 {
 public:
-    using BlockType = Block;
-    using BlockPtr  = Block*;
+    using BlockType  = Block;
     using Iterator  = typename Block::iterator;
-    using ValueType = typename Block::value_type;
 
     void Open();
     void Close();
     bool Empty();
 
-    ValueType& Front();     // get a single value
-    BlockPtr FrontBlock();  // get entire block
-    BlockPtr ReadBlock();   // read a block right from the file
+    typename Block::value_type& Front();
+    Block* FrontBlock();
+    Block* ReadBlock();
 
     void Pop();
     void PopBlock();
@@ -33,12 +31,12 @@ private:
     void WaitForBlock();
 
 private:
-    mutable std::condition_variable cv_;
-    mutable std::mutex mtx_;
-    std::queue<BlockPtr> blocks_queue_;
+    mutable std::condition_variable m_cv;
+    mutable std::mutex m_mtx;
+    std::queue<Block*> m_queue;
 
-    BlockPtr block_ = {nullptr};
-    Iterator block_iter_;
+    Block* m_block = {nullptr};
+    Iterator m_blockIter;
 
     std::thread tinput_;
     std::atomic<bool> empty_ = {false};
@@ -62,25 +60,25 @@ void BlockInputStream<Block, Reader, MemoryPolicy>::Close()
 template <typename Block, typename Reader, typename MemoryPolicy>
 bool BlockInputStream<Block, Reader, MemoryPolicy>::Empty()
 {
-    if (!block_) {
+    if (!m_block) {
         WaitForBlock();
     }
-    return empty_ && !block_;
+    return empty_ && !m_block;
 }
 
 template <typename Block, typename Reader, typename MemoryPolicy>
 auto BlockInputStream<Block, Reader, MemoryPolicy>::Front()
-    -> ValueType&
+    -> typename Block::value_type&
 {
-    return *block_iter_;
+    return *m_blockIter;
 }
 
 template <typename Block, typename Reader, typename MemoryPolicy>
 void BlockInputStream<Block, Reader, MemoryPolicy>::Pop()
 {
-    ++block_iter_;
-    if (block_iter_ == block_->end()) {
-        auto tmp = block_;
+    ++m_blockIter;
+    if (m_blockIter == m_block->end()) {
+        auto tmp = m_block;
         PopBlock();
         MemoryPolicy::Free(tmp);
     }
@@ -88,40 +86,40 @@ void BlockInputStream<Block, Reader, MemoryPolicy>::Pop()
 
 template <typename Block, typename Reader, typename MemoryPolicy>
 auto BlockInputStream<Block, Reader, MemoryPolicy>::FrontBlock()
-    -> BlockPtr
+    -> Block*
 {
-    return block_;
+    return m_block;
 }
 
 template <typename Block, typename Reader, typename MemoryPolicy>
 void BlockInputStream<Block, Reader, MemoryPolicy>::PopBlock()
 {
-    block_ = nullptr;
+    m_block = nullptr;
 }
 
 template <typename Block, typename Reader, typename MemoryPolicy>
 void BlockInputStream<Block, Reader, MemoryPolicy>::InputLoop()
 {
     while (!Reader::Empty()) {
-        BlockPtr block = ReadBlock();
+        Block* block = ReadBlock();
 
         if (block) {
-            std::unique_lock<std::mutex> lck(mtx_);
-            blocks_queue_.push(block);
-            cv_.notify_one();
+            std::unique_lock<std::mutex> lck(m_mtx);
+            m_queue.push(block);
+            m_cv.notify_one();
         }
     }
 
-    std::unique_lock<std::mutex> lck(mtx_);
+    std::unique_lock<std::mutex> lck(m_mtx);
     empty_ = true;
-    cv_.notify_one();
+    m_cv.notify_one();
 }
 
 template <typename Block, typename Reader, typename MemoryPolicy>
 auto BlockInputStream<Block, Reader, MemoryPolicy>::ReadBlock()
-    -> BlockPtr
+    -> Block*
 {
-    BlockPtr block = MemoryPolicy::Allocate();
+    Block* block = MemoryPolicy::Allocate();
 
     Reader::Read(block);
     if (block->empty()) {
@@ -135,15 +133,15 @@ auto BlockInputStream<Block, Reader, MemoryPolicy>::ReadBlock()
 template <typename Block, typename Reader, typename MemoryPolicy>
 void BlockInputStream<Block, Reader, MemoryPolicy>::WaitForBlock()
 {
-    std::unique_lock<std::mutex> lck(mtx_);
-    while (blocks_queue_.empty() && !empty_) {
-        cv_.wait(lck);
+    std::unique_lock<std::mutex> lck(m_mtx);
+    while (m_queue.empty() && !empty_) {
+        m_cv.wait(lck);
     }
 
-    if (!blocks_queue_.empty()) {
-        block_ = blocks_queue_.front();
-        blocks_queue_.pop();
-        block_iter_ = block_->begin();
+    if (!m_queue.empty()) {
+        m_block = m_queue.front();
+        m_queue.pop();
+        m_blockIter = m_block->begin();
     }
 }
 
