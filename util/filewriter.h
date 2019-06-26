@@ -19,25 +19,25 @@ public:
     void Write(const BlockPtr& block);
 
     /// Set/get properties
-    void set_output_filename(const std::string& ofn)
+    void setFilename(const std::string& ofn)
     {
-        output_filename_ = ofn;
+        m_fileName = ofn;
     }
 
-    const std::string& output_filename() const
+    const std::string& getFilename() const
     {
-        return output_filename_;
+        return m_fileName;
     }
 
 private:
-    std::string output_filename_;
+    std::string m_fileName;
     std::ofstream ofs_;
 };
 
 template <typename Block>
 void FileWriter<Block>::Open()
 {
-   ofs_.open(output_filename_, std::ofstream::out/*| std::ofstream::binary*/);
+   ofs_.open(m_fileName, std::ofstream::out/*| std::ofstream::binary*/);
 }
 
 template <typename Block>

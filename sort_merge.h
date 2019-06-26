@@ -16,8 +16,6 @@ void merge_2streams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
                     Comparator comp)
 {
     if (sin.size() != 2) {
-        //LOG_ERR(("Internal error: mismatch in number of streams %d/%d")
-        //        % sin.size() % 2);
         return;
     }
     auto it = sin.begin();
@@ -42,8 +40,6 @@ void merge_3streams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
                     Comparator comp)
 {
     if (sin.size() != 3) {
-        //LOG_ERR(("Internal error: mismatch in number of streams %d/%d")
-        //        % sin.size() % 3);
         return;
     }
     auto it = sin.begin();
@@ -74,8 +70,6 @@ void merge_4streams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
                     Comparator comp)
 {
     if (sin.size() != 4) {
-    //    LOG_ERR(("Internal error: mismatch in number of streams %d/%d")
-    //            % sin.size() % 4);
         return;
     }
     auto it = sin.begin();
@@ -112,8 +106,6 @@ void merge_nstreams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
                     Comparator comp)
 {
     if (sin.size() <= 4) {
-        //LOG_ERR(("Internal error: too few streams for heap-based merge %d")
-        //        % sin.size());
         return;
     }
 
@@ -162,8 +154,7 @@ OutputStreamPtr merge_streams(std::unordered_set<InputStreamPtr> sin,
     std::unordered_set<InputStream*> sinp;
     OutputStream* soutp = sout.get();
 
-    auto comp = typename Types<
-        typename InputStream::BlockType::value_type>::Comparator();
+    auto comp = std::less<typename InputStream::BlockType::value_type>();
 
     for (const auto& s : sin) {
         s->Open();

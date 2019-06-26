@@ -18,8 +18,8 @@ void split(external_sort::SplitParams& params)
 
     auto istream = std::make_shared<typename Types<ValueType>::IStream>();
     istream->set_mem_pool(mem_pool);
-    istream->set_input_filename(params.spl.ifile);
-    istream->set_input_rm_file(params.spl.rm_input);
+    istream->setFilename(params.spl.ifile);
+    istream->setFileRM(params.spl.rm_input);
     istream->Open();
 
     if (params.spl.ofile.empty()) {
@@ -32,7 +32,7 @@ void split(external_sort::SplitParams& params)
 
         auto ostream = std::make_shared<typename Types<ValueType>::OStream>();
         ostream->set_mem_pool(mem_pool);
-        ostream->set_output_filename(
+        ostream->setFilename(
             make_tmp_filename(params.spl.ofile, DEF_SPL_TMP_SFX, ++file_cnt));
         ostream->Open();
 
@@ -43,7 +43,7 @@ void split(external_sort::SplitParams& params)
             auto ostream_ready = splits.get();
             if (ostream_ready) {
                 ostream_ready->Close();
-                params.out.ofiles.push_back(ostream_ready->output_filename());
+                params.out.ofiles.push_back(ostream_ready->getFilename());
             }
         }
     }

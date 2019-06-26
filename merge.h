@@ -28,8 +28,8 @@ void merge(external_sort::MergeParams& params)
             // create input stream
             auto is = std::make_shared<typename Types<ValueType>::IStream>();
             is->set_mem_pool(mem_istream, params.mrg.stmblocks);
-            is->set_input_filename(files.front());
-            is->set_input_rm_file(params.mrg.rm_input);
+            is->setFilename(files.front());
+            is->setFileRM(params.mrg.rm_input);
             // add to the set
             istreams.insert(is);
             files.pop_front();
@@ -38,7 +38,7 @@ void merge(external_sort::MergeParams& params)
         // create an output stream
         auto ostream = std::make_shared<typename Types<ValueType>::OStream>();
         ostream->set_mem_pool(mem_ostream, params.mrg.stmblocks);
-        ostream->set_output_filename(make_tmp_filename(
+        ostream->setFilename(make_tmp_filename(
             (params.mrg.tfile.size() ? params.mrg.tfile : params.mrg.ofile),
             DEF_MRG_TMP_SFX, ++file_cnt));
 
@@ -57,7 +57,7 @@ void merge(external_sort::MergeParams& params)
                (merges.Ready() > 0) || (merges.Running() >= params.mrg.merges)) {
             auto ostream_ready = merges.get();
             if (ostream_ready) {
-                files.push_back(ostream_ready->output_filename());
+                files.push_back(ostream_ready->getFilename());
             }
         }
     }

@@ -11,61 +11,60 @@ template <typename Block>
 class FileReader
 {
 public:
-    using BlockPtr = Block*;
-    using ValueType = typename Block::value_type;
-
     /// Policy interface
     void Open()
     {
-        ifs_.open(input_filename_, std::ifstream::in /*| std::ifstream::binary*/);
+        m_inputStream.open(m_fileName, std::ifstream::in /*| std::ifstream::binary*/);
     }
 
     void Close();
-    void Read(BlockPtr& block);
+    void Read(Block*& block);
     bool Empty() const;
 
     /// Set/get properties
-    void set_input_filename(const std::string& ifn){ input_filename_ = ifn; }
-    const std::string& input_filename() const { return input_filename_; }
+    void setFilename(const std::string& ifn)
+    {
+        m_fileName = ifn;
+    }
 
-    void set_input_rm_file(bool rm) { input_rm_file_ = rm; }
-    bool input_rm_file() const { return input_rm_file_; }
+    void setFileRM(bool rm)
+    {
+        m_rmFile = rm;
+    }
 
 private:
-    std::ifstream ifs_;
-    std::string input_filename_;
-    bool input_rm_file_ = {false};
-    size_t block_cnt_ = 0;
+    bool m_rmFile = {false};
+    std::ifstream m_inputStream;
+    std::string m_fileName;
 };
 
 template <typename Block>
 void FileReader<Block>::Close()
 {
-    if (ifs_.is_open()) {
-        ifs_.close();
-        if (input_rm_file_) {
-            remove(input_filename_.c_str());
+    if (m_inputStream.is_open()) {
+        m_inputStream.close();
+        if (m_rmFile) {
+            remove(m_fileName.c_str());
         }
     }
 }
 
 template <typename Block>
-void FileReader<Block>::Read(BlockPtr& block)
+void FileReader<Block>::Read(Block*& block)
 {
     block->resize(block->capacity());
-    std::streamsize bsize = block->size() * sizeof(ValueType);
+    std::streamsize bsize = block->size() * sizeof(typename Block::value_type);
 
-    ifs_.read(reinterpret_cast<char*>(block->data()), bsize);
-    if (ifs_.gcount() < bsize) {
-        block->resize(ifs_.gcount() / sizeof(ValueType));
+    m_inputStream.read(reinterpret_cast<char*>(block->data()), bsize);
+    if (m_inputStream.gcount() < bsize) {
+        block->resize(m_inputStream.gcount() / sizeof(typename Block::value_type));
     }
-    block_cnt_++;
 }
 
 template <typename Block>
 bool FileReader<Block>::Empty() const
 {
-    return !(ifs_.is_open() && ifs_.good());
+    return !(m_inputStream.is_open() && m_inputStream.good());
 }
 
 }

@@ -58,7 +58,7 @@ struct GenerateParams
 
 //! Default generator
 template <typename T>
-struct DefaultValueGenerator
+struct Generator
 {
     T operator()()
     {
@@ -71,27 +71,6 @@ struct DefaultValueGenerator
         }
         return u.data;
     }
-};
-
-//! Default value-to-string convertor
-template <typename ValueType>
-struct DefaultValue2Str
-{
-    std::string operator()(const ValueType& value)
-    {
-        std::ostringstream ss;
-        ss << value;
-        return ss.str();
-    }
-};
-
-//! Default ValueType traits
-template <typename ValueType>
-struct ValueTraits
-{
-    using Comparator = std::less<ValueType>;
-    using Generator = DefaultValueGenerator<ValueType>;
-    using Value2Str = DefaultValue2Str<ValueType>;
 };
 
 const char* DEF_SPL_TMP_SFX = "split";

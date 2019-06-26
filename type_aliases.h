@@ -16,9 +16,6 @@ namespace external_sort {
 template <typename ValueType>
 struct Types
 {
-    // Value trait shortcuts
-    using Comparator = typename ValueTraits<ValueType>::Comparator;
-
     // Block Types
     using Block = std::vector<ValueType>;
     using BlockPtr = Block*;
@@ -42,7 +39,7 @@ typename Types<ValueType>::OStreamPtr
 sort_and_write(typename Types<ValueType>::BlockPtr block,
                typename Types<ValueType>::OStreamPtr ostream)
 {
-    std::sort(block->begin(), block->end(), typename Types<ValueType>::Comparator());
+    std::sort(block->begin(), block->end(), typename std::less<ValueType>());
     ostream->WriteBlock(block);
     return ostream;
 }
