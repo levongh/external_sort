@@ -6,12 +6,12 @@
 #include <atomic>
 #include <queue>
 
-#include "policy/block_types.h"
+#include "block_types.h"
 
 namespace external_sort {
 
-template <typename Block, typename ReadPolicy, typename MemoryPolicy>
-class BlockInputStream : public ReadPolicy, public MemoryPolicy
+template <typename Block, typename Reader, typename MemoryPolicy>
+class BlockInputStream : public Reader, public MemoryPolicy
 {
 public:
     using BlockType = Block;
@@ -46,23 +46,23 @@ private:
     std::atomic<bool> empty_ = {false};
 };
 
-template <typename Block, typename ReadPolicy, typename MemoryPolicy>
-void BlockInputStream<Block, ReadPolicy, MemoryPolicy>::Open()
+template <typename Block, typename Reader, typename MemoryPolicy>
+void BlockInputStream<Block, Reader, MemoryPolicy>::Open()
 {
-    ReadPolicy::Open();
+    Reader::Open();
     empty_ = false;
     tinput_ = std::thread(&BlockInputStream::InputLoop, this);
 }
 
-template <typename Block, typename ReadPolicy, typename MemoryPolicy>
-void BlockInputStream<Block, ReadPolicy, MemoryPolicy>::Close()
+template <typename Block, typename Reader, typename MemoryPolicy>
+void BlockInputStream<Block, Reader, MemoryPolicy>::Close()
 {
-    ReadPolicy::Close();
+    Reader::Close();
     tinput_.join();
 }
 
-template <typename Block, typename ReadPolicy, typename MemoryPolicy>
-bool BlockInputStream<Block, ReadPolicy, MemoryPolicy>::Empty()
+template <typename Block, typename Reader, typename MemoryPolicy>
+bool BlockInputStream<Block, Reader, MemoryPolicy>::Empty()
 {
     if (!block_) {
         WaitForBlock();
@@ -70,15 +70,15 @@ bool BlockInputStream<Block, ReadPolicy, MemoryPolicy>::Empty()
     return empty_ && !block_;
 }
 
-template <typename Block, typename ReadPolicy, typename MemoryPolicy>
-auto BlockInputStream<Block, ReadPolicy, MemoryPolicy>::Front()
+template <typename Block, typename Reader, typename MemoryPolicy>
+auto BlockInputStream<Block, Reader, MemoryPolicy>::Front()
     -> ValueType&
 {
     return *block_iter_;
 }
 
-template <typename Block, typename ReadPolicy, typename MemoryPolicy>
-void BlockInputStream<Block, ReadPolicy, MemoryPolicy>::Pop()
+template <typename Block, typename Reader, typename MemoryPolicy>
+void BlockInputStream<Block, Reader, MemoryPolicy>::Pop()
 {
     ++block_iter_;
     if (block_iter_ == block_->end()) {
@@ -88,23 +88,23 @@ void BlockInputStream<Block, ReadPolicy, MemoryPolicy>::Pop()
     }
 }
 
-template <typename Block, typename ReadPolicy, typename MemoryPolicy>
-auto BlockInputStream<Block, ReadPolicy, MemoryPolicy>::FrontBlock()
+template <typename Block, typename Reader, typename MemoryPolicy>
+auto BlockInputStream<Block, Reader, MemoryPolicy>::FrontBlock()
     -> BlockPtr
 {
     return block_;
 }
 
-template <typename Block, typename ReadPolicy, typename MemoryPolicy>
-void BlockInputStream<Block, ReadPolicy, MemoryPolicy>::PopBlock()
+template <typename Block, typename Reader, typename MemoryPolicy>
+void BlockInputStream<Block, Reader, MemoryPolicy>::PopBlock()
 {
     block_ = nullptr;
 }
 
-template <typename Block, typename ReadPolicy, typename MemoryPolicy>
-void BlockInputStream<Block, ReadPolicy, MemoryPolicy>::InputLoop()
+template <typename Block, typename Reader, typename MemoryPolicy>
+void BlockInputStream<Block, Reader, MemoryPolicy>::InputLoop()
 {
-    while (!ReadPolicy::Empty()) {
+    while (!Reader::Empty()) {
         BlockPtr block = ReadBlock();
 
         if (block) {
@@ -119,13 +119,13 @@ void BlockInputStream<Block, ReadPolicy, MemoryPolicy>::InputLoop()
     cv_.notify_one();
 }
 
-template <typename Block, typename ReadPolicy, typename MemoryPolicy>
-auto BlockInputStream<Block, ReadPolicy, MemoryPolicy>::ReadBlock()
+template <typename Block, typename Reader, typename MemoryPolicy>
+auto BlockInputStream<Block, Reader, MemoryPolicy>::ReadBlock()
     -> BlockPtr
 {
     BlockPtr block = MemoryPolicy::Allocate();
 
-    ReadPolicy::Read(block);
+    Reader::Read(block);
     if (block->empty()) {
         MemoryPolicy::Free(block);
         block = nullptr;
@@ -134,8 +134,8 @@ auto BlockInputStream<Block, ReadPolicy, MemoryPolicy>::ReadBlock()
     return block;
 }
 
-template <typename Block, typename ReadPolicy, typename MemoryPolicy>
-void BlockInputStream<Block, ReadPolicy, MemoryPolicy>::WaitForBlock()
+template <typename Block, typename Reader, typename MemoryPolicy>
+void BlockInputStream<Block, Reader, MemoryPolicy>::WaitForBlock()
 {
     std::unique_lock<std::mutex> lck(mtx_);
     while (blocks_queue_.empty() && !empty_) {

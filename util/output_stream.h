@@ -6,12 +6,12 @@
 #include <atomic>
 #include <queue>
 
-#include "policy/block_types.h"
+#include "block_types.h"
 
 namespace external_sort {
 
-template <typename Block, typename WritePolicy, typename MemoryPolicy>
-class BlockOutputStream : public WritePolicy, public MemoryPolicy
+template <typename Block, typename Writer, typename MemoryPolicy>
+class BlockOutputStream : public Writer, public MemoryPolicy
 {
   public:
     using BlockType = Block;
@@ -41,26 +41,26 @@ class BlockOutputStream : public WritePolicy, public MemoryPolicy
     std::atomic<bool> stopped_ = {false};
 };
 
-template <typename Block, typename WritePolicy, typename MemoryPolicy>
-void BlockOutputStream<Block, WritePolicy, MemoryPolicy>::Open()
+template <typename Block, typename Writer, typename MemoryPolicy>
+void BlockOutputStream<Block, Writer, MemoryPolicy>::Open()
 {
-    WritePolicy::Open();
+    Writer::Open();
     stopped_ = false;
     toutput_ = std::thread(&BlockOutputStream::OutputLoop, this);
 }
 
-template <typename Block, typename WritePolicy, typename MemoryPolicy>
-void BlockOutputStream<Block, WritePolicy, MemoryPolicy>::Close()
+template <typename Block, typename Writer, typename MemoryPolicy>
+void BlockOutputStream<Block, Writer, MemoryPolicy>::Close()
 {
     PushBlock(block_);
     stopped_ = true;
     cv_.notify_one();
     toutput_.join();
-    WritePolicy::Close();
+    Writer::Close();
 }
 
-template <typename Block, typename WritePolicy, typename MemoryPolicy>
-void BlockOutputStream<Block, WritePolicy, MemoryPolicy>::Push(
+template <typename Block, typename Writer, typename MemoryPolicy>
+void BlockOutputStream<Block, Writer, MemoryPolicy>::Push(
     const ValueType& value)
 {
     if (!block_) {
@@ -75,8 +75,8 @@ void BlockOutputStream<Block, WritePolicy, MemoryPolicy>::Push(
     }
 }
 
-template <typename Block, typename WritePolicy, typename MemoryPolicy>
-void BlockOutputStream<Block, WritePolicy, MemoryPolicy>::PushBlock(
+template <typename Block, typename Writer, typename MemoryPolicy>
+void BlockOutputStream<Block, Writer, MemoryPolicy>::PushBlock(
     BlockPtr block)
 {
     if (block) {
@@ -86,8 +86,8 @@ void BlockOutputStream<Block, WritePolicy, MemoryPolicy>::PushBlock(
     }
 }
 
-template <typename Block, typename WritePolicy, typename MemoryPolicy>
-void BlockOutputStream<Block, WritePolicy, MemoryPolicy>::OutputLoop()
+template <typename Block, typename Writer, typename MemoryPolicy>
+void BlockOutputStream<Block, Writer, MemoryPolicy>::OutputLoop()
 {
     for (;;) {
         std::unique_lock<std::mutex> lck(mtx_);
@@ -107,11 +107,11 @@ void BlockOutputStream<Block, WritePolicy, MemoryPolicy>::OutputLoop()
     }
 }
 
-template <typename Block, typename WritePolicy, typename MemoryPolicy>
-void BlockOutputStream<Block, WritePolicy, MemoryPolicy>::WriteBlock(
+template <typename Block, typename Writer, typename MemoryPolicy>
+void BlockOutputStream<Block, Writer, MemoryPolicy>::WriteBlock(
     BlockPtr block)
 {
-    WritePolicy::Write(block);
+    Writer::Write(block);
     MemoryPolicy::Free(block);
 }
 

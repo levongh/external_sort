@@ -9,7 +9,7 @@
 namespace external_sort {
 
 template <typename Block>
-class BlockFileWritePolicy
+class FileWriter
 {
 public:
     using BlockPtr = typename BlockTraits<Block>::BlockPtr;
@@ -32,58 +32,32 @@ public:
     }
 
 private:
-    void FileOpen();
-    void FileWrite(const BlockPtr& block);
-    void FileClose();
-
-private:
     std::string output_filename_;
     std::ofstream ofs_;
 };
 
 template <typename Block>
-void BlockFileWritePolicy<Block>::Open()
+void FileWriter<Block>::Open()
 {
-    FileOpen();
+   ofs_.open(output_filename_, std::ofstream::out/*| std::ofstream::binary*/);
 }
 
 template <typename Block>
-void BlockFileWritePolicy<Block>::Close()
+void FileWriter<Block>::Close()
 {
-    FileClose();
+    if (ofs_.is_open()) {
+        ofs_.close();
+    }
 }
 
 template <typename Block>
-void BlockFileWritePolicy<Block>::Write(const BlockPtr& block)
+void FileWriter<Block>::Write(const BlockPtr& block)
 {
     if (!block || block->empty()) {
         return;
     }
 
-    FileWrite(block);
-}
-
-template <typename Block>
-void BlockFileWritePolicy<Block>::FileOpen()
-{
-   ofs_.open(output_filename_, std::ofstream::out/*| std::ofstream::binary*/);
-    if (!ofs_) {
-        //LOG_ERR(("Failed to open output file: %s") % output_filename_);
-    }
-}
-
-template <typename Block>
-void BlockFileWritePolicy<Block>::FileWrite(const BlockPtr& block)
-{
     ofs_.write((const char*)block->data(), block->size() * sizeof(ValueType));
-}
-
-template <typename Block>
-void BlockFileWritePolicy<Block>::FileClose()
-{
-    if (ofs_.is_open()) {
-        ofs_.close();
-    }
 }
 
 } // namespace external_sort

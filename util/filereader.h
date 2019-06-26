@@ -10,14 +10,18 @@ namespace external_sort
 {
 
 template <typename Block>
-class BlockFileReadPolicy
+class FileReader
 {
 public:
     using BlockPtr = typename BlockTraits<Block>::BlockPtr;
     using ValueType = typename BlockTraits<Block>::ValueType;
 
     /// Policy interface
-    void Open();
+    void Open()
+    {
+        ifs_.open(input_filename_, std::ifstream::in /*| std::ifstream::binary*/);
+    }
+
     void Close();
     void Read(BlockPtr& block);
     bool Empty() const;
@@ -30,11 +34,6 @@ public:
     bool input_rm_file() const { return input_rm_file_; }
 
 private:
-    void FileOpen();
-    void FileRead(BlockPtr& block);
-    void FileClose();
-
-private:
     std::ifstream ifs_;
     std::string input_filename_;
     bool input_rm_file_ = {false};
@@ -42,41 +41,18 @@ private:
 };
 
 template <typename Block>
-void BlockFileReadPolicy<Block>::Open()
+void FileReader<Block>::Close()
 {
-    FileOpen();
-}
-
-template <typename Block>
-void BlockFileReadPolicy<Block>::Close()
-{
-    FileClose();
-}
-
-template <typename Block>
-void BlockFileReadPolicy<Block>::Read(BlockPtr& block)
-{
-    FileRead(block);
-    block_cnt_++;
-}
-
-template <typename Block>
-bool BlockFileReadPolicy<Block>::Empty() const
-{
-    return !(ifs_.is_open() && ifs_.good());
-}
-
-template <typename Block>
-void BlockFileReadPolicy<Block>::FileOpen()
-{
-    ifs_.open(input_filename_, std::ifstream::in /*| std::ifstream::binary*/);
-    if (!ifs_) {
-        //LOG_ERR(("Failed to open input file: %s") % input_filename_);
+    if (ifs_.is_open()) {
+        ifs_.close();
+        if (input_rm_file_) {
+            remove(input_filename_.c_str());
+        }
     }
 }
 
 template <typename Block>
-void BlockFileReadPolicy<Block>::FileRead(BlockPtr& block)
+void FileReader<Block>::Read(BlockPtr& block)
 {
     block->resize(block->capacity());
     std::streamsize bsize = block->size() * sizeof(ValueType);
@@ -85,19 +61,13 @@ void BlockFileReadPolicy<Block>::FileRead(BlockPtr& block)
     if (ifs_.gcount() < bsize) {
         block->resize(ifs_.gcount() / sizeof(ValueType));
     }
+    block_cnt_++;
 }
 
 template <typename Block>
-void BlockFileReadPolicy<Block>::FileClose()
+bool FileReader<Block>::Empty() const
 {
-    if (ifs_.is_open()) {
-        ifs_.close();
-        if (input_rm_file_) {
-            if (remove(input_filename_.c_str()) != 0) {
-                //LOG_ERR(("Failed to remove file: %s") % input_filename_);
-            }
-        }
-    }
+    return !(ifs_.is_open() && ifs_.good());
 }
 
 }

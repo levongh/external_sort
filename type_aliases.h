@@ -1,12 +1,11 @@
 #pragma once
 
-#include "policy/memory_policy.h"
-#include "policy/read_policy.h"
-#include "policy/write_policy.h"
-#include "input_stream.h"
-#include "output_stream.h"
-#include "policy/block_types.h"
-#include "utility.h"
+#include "util/memory_policy.h"
+#include "util/filereader.h"
+#include "util/filewriter.h"
+#include "util/input_stream.h"
+#include "util/output_stream.h"
+#include "util/utility.h"
 
 #include <algorithm>
 #include <memory>
@@ -21,18 +20,18 @@ struct Types
     using Comparator = typename ValueTraits<ValueType>::Comparator;
 
     // Block Types
-    using Block = VectorBlock<ValueType>;
+    using Block = std::vector<ValueType>;
     using BlockPtr = typename BlockTraits<Block>::BlockPtr;
     using BlockPool = typename BlockMemoryPolicy<Block>::BlockPool;
     //using BlockTraits = typename BlockTraits<Block>;
 
     // Stream Types
     using IStream = BlockInputStream<Block,
-                                     BlockFileReadPolicy<Block>,
+                                     FileReader<Block>,
                                      BlockMemoryPolicy<Block>>;
 
     using OStream = BlockOutputStream<Block,
-                                             BlockFileWritePolicy<Block>,
+                                             FileWriter<Block>,
                                              BlockMemoryPolicy<Block>>;
 
     using IStreamPtr = std::shared_ptr<IStream>;

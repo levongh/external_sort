@@ -1,8 +1,8 @@
 #pragma once
 
-#include "policy/block_types.h"
-#include "output_stream.h"
-#include "utility.h"
+#include "util/block_types.h"
+#include "util/output_stream.h"
+#include "util/utility.h"
 
 
 //! External Generate

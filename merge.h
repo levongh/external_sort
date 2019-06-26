@@ -1,10 +1,9 @@
 #pragma once
 
-#include "policy/block_types.h"
 #include "async_funcs.h"
-#include "output_stream.h"
-#include "input_stream.h"
-#include "utility.h"
+#include "util/output_stream.h"
+#include "util/input_stream.h"
+#include "util/utility.h"
 #include "sort_merge.h"
 
 template <typename ValueType>

@@ -6,9 +6,6 @@
 namespace external_sort
 {
 
-template <typename T>
-using VectorBlock = std::vector<T>;
-
 template <typename BlockType>
 struct BlockTraits
 {
