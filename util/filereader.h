@@ -12,14 +12,14 @@ class FileReader
 {
 public:
     /// Policy interface
-    void Open()
+    void open()
     {
-        m_inputStream.open(m_fileName, std::ifstream::in /*| std::ifstream::binary*/);
+        m_inputStream.open(m_fileName, std::ifstream::in | std::ifstream::binary);
     }
 
-    void Close();
-    void Read(Block*& block);
-    bool Empty() const;
+    void close();
+    void read(Block*& block);
+    bool empty() const;
 
     /// Set/get properties
     void setFilename(const std::string& ifn)
@@ -39,7 +39,7 @@ private:
 };
 
 template <typename Block>
-void FileReader<Block>::Close()
+void FileReader<Block>::close()
 {
     if (m_inputStream.is_open()) {
         m_inputStream.close();
@@ -50,7 +50,7 @@ void FileReader<Block>::Close()
 }
 
 template <typename Block>
-void FileReader<Block>::Read(Block*& block)
+void FileReader<Block>::read(Block*& block)
 {
     block->resize(block->capacity());
     std::streamsize bsize = block->size() * sizeof(typename Block::value_type);
@@ -62,7 +62,7 @@ void FileReader<Block>::Read(Block*& block)
 }
 
 template <typename Block>
-bool FileReader<Block>::Empty() const
+bool FileReader<Block>::empty() const
 {
     return !(m_inputStream.is_open() && m_inputStream.good());
 }

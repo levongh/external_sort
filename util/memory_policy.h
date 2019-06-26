@@ -43,13 +43,13 @@ public:
         }
 
     public:
-        size_t Allocated() const
+        size_t allocated() const
         {
             std::unique_lock<std::mutex> lck(m_mutex);
             return m_blocksAllocated;
         }
 
-        BlockPtr Allocate()
+        BlockPtr allocate()
         {
             std::unique_lock<std::mutex> lck(m_mutex);
             while (m_pool.empty()) {
@@ -61,7 +61,7 @@ public:
             return block;
         }
 
-        void Free(BlockPtr block)
+        void free(BlockPtr block)
         {
             std::unique_lock<std::mutex> lck(m_mutex);
             --m_blocksAllocated;
@@ -79,33 +79,33 @@ public:
     };
 
 public:
-    inline size_t Allocated() const
+    inline size_t allocated() const
     {
-        return mem_pool_->Allocated();
+        return m_memPool->allocated();
     }
 
-    inline BlockPtr Allocate()
+    inline BlockPtr allocate()
     {
-        return mem_pool_->Allocate();
+        return m_memPool->allocate();
     }
 
-    inline void Free(BlockPtr block)
+    inline void free(BlockPtr block)
     {
-        mem_pool_->Free(block);
+        m_memPool->free(block);
     }
 
     void set_mem_pool(size_t memsize, size_t memblocks)
     {
-        mem_pool_ = std::make_shared<BlockPool>(memsize, memblocks);
+        m_memPool = std::make_shared<BlockPool>(memsize, memblocks);
     }
 
     void set_mem_pool(BlockPoolPtr pool)
     {
-        mem_pool_ = pool;
+        m_memPool = pool;
     }
 
 private:
-    BlockPoolPtr mem_pool_ = {nullptr};
+    BlockPoolPtr m_memPool = {nullptr};
 };
 
 } // namespace external_sort

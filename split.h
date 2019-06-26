@@ -20,13 +20,13 @@ void split(external_sort::SplitParams& params)
     istream->set_mem_pool(mem_pool);
     istream->setFilename(params.spl.ifile);
     istream->setFileRM(params.spl.rm_input);
-    istream->Open();
+    istream->open();
 
     if (params.spl.ofile.empty()) {
         params.spl.ofile = params.spl.ifile;
     }
 
-    while (!istream->Empty()) {
+    while (!istream->empty()) {
         auto block = istream->FrontBlock();
         istream->PopBlock();
 
@@ -39,7 +39,7 @@ void split(external_sort::SplitParams& params)
         splits.Async(&sort_and_write<ValueType>,
                      std::move(block), std::move(ostream));
 
-        while ((splits.Ready() > 0) || (splits.Running() && istream->Empty())) {
+        while ((splits.Ready() > 0) || (splits.Running() && istream->empty())) {
             auto ostream_ready = splits.get();
             if (ostream_ready) {
                 ostream_ready->Close();
@@ -47,7 +47,7 @@ void split(external_sort::SplitParams& params)
             }
         }
     }
-    istream->Close();
+    istream->close();
 }
 
 

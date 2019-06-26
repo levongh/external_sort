@@ -14,9 +14,9 @@ public:
     using ValueType = typename Block::value_type;
 
     /// Policy interface
-    void Open();
-    void Close();
-    void Write(const BlockPtr& block);
+    void open();
+    void close();
+    void write(const BlockPtr& block);
 
     /// Set/get properties
     void setFilename(const std::string& ofn)
@@ -31,31 +31,30 @@ public:
 
 private:
     std::string m_fileName;
-    std::ofstream ofs_;
+    std::ofstream m_stream;
 };
 
 template <typename Block>
-void FileWriter<Block>::Open()
+void FileWriter<Block>::open()
 {
-   ofs_.open(m_fileName, std::ofstream::out/*| std::ofstream::binary*/);
+   m_stream.open(m_fileName, std::ofstream::out | std::ofstream::binary);
 }
 
 template <typename Block>
-void FileWriter<Block>::Close()
+void FileWriter<Block>::close()
 {
-    if (ofs_.is_open()) {
-        ofs_.close();
+    if (m_stream.is_open()) {
+        m_stream.close();
     }
 }
 
 template <typename Block>
-void FileWriter<Block>::Write(const BlockPtr& block)
+void FileWriter<Block>::write(const BlockPtr& block)
 {
     if (!block || block->empty()) {
         return;
     }
-
-    ofs_.write((const char*)block->data(), block->size() * sizeof(ValueType));
+    m_stream.write((const char*)block->data(), block->size() * sizeof(ValueType));
 }
 
 } // namespace external_sort

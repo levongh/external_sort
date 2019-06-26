@@ -24,11 +24,11 @@ private:
 
 private:
 
-    mutable std::condition_variable cv_;
-    mutable std::mutex mtx_;
-    std::queue<Block*> blocks_queue_;
+    mutable std::condition_variable m_cv;
+    mutable std::mutex m_mutex;
+    std::queue<Block*> m_queue;
 
-    Block* block_ = {nullptr};
+    Block* m_block = {nullptr};
 
     std::thread toutput_;
     std::atomic<bool> stopped_ = {false};
@@ -37,7 +37,7 @@ private:
 template <typename Block, typename Writer, typename MemoryPolicy>
 void BlockOutputStream<Block, Writer, MemoryPolicy>::Open()
 {
-    Writer::Open();
+    Writer::open();
     stopped_ = false;
     toutput_ = std::thread(&BlockOutputStream::OutputLoop, this);
 }
@@ -45,26 +45,25 @@ void BlockOutputStream<Block, Writer, MemoryPolicy>::Open()
 template <typename Block, typename Writer, typename MemoryPolicy>
 void BlockOutputStream<Block, Writer, MemoryPolicy>::Close()
 {
-    PushBlock(block_);
+    PushBlock(m_block);
     stopped_ = true;
-    cv_.notify_one();
+    m_cv.notify_one();
     toutput_.join();
-    Writer::Close();
+    Writer::close();
 }
 
 template <typename Block, typename Writer, typename MemoryPolicy>
 void BlockOutputStream<Block, Writer, MemoryPolicy>::Push(
     const typename Block::value_type& value)
 {
-    if (!block_) {
-        block_ = MemoryPolicy::Allocate();
+    if (!m_block) {
+        m_block = MemoryPolicy::allocate();
     }
-    block_->push_back(value);
+    m_block->push_back(value);
 
-    if (block_->size() == block_->capacity()) {
-        // block is full, push it to the output queue
-        PushBlock(block_);
-        block_ = nullptr;
+    if (m_block->size() == m_block->capacity()) {
+        PushBlock(m_block);
+        m_block = nullptr;
     }
 }
 
@@ -73,9 +72,9 @@ void BlockOutputStream<Block, Writer, MemoryPolicy>::PushBlock(
     Block* block)
 {
     if (block) {
-        std::unique_lock<std::mutex> lck(mtx_);
-        blocks_queue_.push(block);
-        cv_.notify_one();
+        std::unique_lock<std::mutex> lck(m_mutex);
+        m_queue.push(block);
+        m_cv.notify_one();
     }
 }
 
@@ -83,14 +82,14 @@ template <typename Block, typename Writer, typename MemoryPolicy>
 void BlockOutputStream<Block, Writer, MemoryPolicy>::OutputLoop()
 {
     for (;;) {
-        std::unique_lock<std::mutex> lck(mtx_);
-        while (blocks_queue_.empty() && !stopped_) {
-            cv_.wait(lck);
+        std::unique_lock<std::mutex> lck(m_mutex);
+        while (m_queue.empty() && !stopped_) {
+            m_cv.wait(lck);
         }
 
-        if (!blocks_queue_.empty()) {
-            Block* block = blocks_queue_.front();
-            blocks_queue_.pop();
+        if (!m_queue.empty()) {
+            Block* block = m_queue.front();
+            m_queue.pop();
             lck.unlock();
 
             WriteBlock(block);
@@ -104,8 +103,8 @@ template <typename Block, typename Writer, typename MemoryPolicy>
 void BlockOutputStream<Block, Writer, MemoryPolicy>::WriteBlock(
     Block* block)
 {
-    Writer::Write(block);
-    MemoryPolicy::Free(block);
+    Writer::write(block);
+    MemoryPolicy::free(block);
 }
 
 } // namespace external_sort

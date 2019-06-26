@@ -6,17 +6,17 @@
 int main()
 {
     external_sort::GenerateParams params;
-    params.mem.size   = 10;
+    params.mem.size   = 100;
     params.mem.unit   = external_sort::MB;
     params.gen.ofile  = "big_input_file";
-    params.gen.fsize  = 10;
+    params.gen.fsize  = 1024;
 
     generate<double>(params);
 
     // set split and merge parameters
     external_sort::SplitParams sp;
     external_sort::MergeParams mp;
-    sp.mem.size = 10;
+    sp.mem.size = 100;
     sp.mem.unit = external_sort::MB;
     mp.mem = sp.mem;
     sp.spl.ifile = "big_input_file";

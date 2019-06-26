@@ -5,7 +5,7 @@ namespace external_sort {
 template <typename InputStream, typename OutputStream>
 void copy_stream(InputStream* sin, OutputStream* sout)
 {
-    while (!sin->Empty()) {
+    while (!sin->empty()) {
         sout->Push(sin->Front());
         sin->Pop();
     }
@@ -27,7 +27,7 @@ void merge_2streams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
         smin = comp(s1->Front(), s2->Front()) ? s1 : s2;
         sout->Push(smin->Front());
         smin->Pop();
-        if (smin->Empty()) {
+        if (smin->empty()) {
             sin.erase(smin);
             break;
         }
@@ -56,7 +56,7 @@ void merge_3streams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
         }
         sout->Push(smin->Front());
         smin->Pop();
-        if (smin->Empty()) {
+        if (smin->empty()) {
             sin.erase(smin);
             break;
         }
@@ -93,7 +93,7 @@ void merge_4streams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
         }
         sout->Push(smin->Front());
         smin->Pop();
-        if (smin->Empty()) {
+        if (smin->empty()) {
             sin.erase(smin);
             break;
         }
@@ -113,7 +113,7 @@ void merge_nstreams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
 
     std::vector<InputStream*> heap;
     for (auto& s : sin) {
-        if (!s->Empty()) {
+        if (!s->empty()) {
             heap.push_back(s);
         }
     }
@@ -131,7 +131,7 @@ void merge_nstreams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
         sout->Push(smin->Front());
         smin->Pop();
 
-        if (smin->Empty()) {
+        if (smin->empty()) {
             // end of this stream
             heap.pop_back();
             sin.erase(smin);
@@ -157,8 +157,8 @@ OutputStreamPtr merge_streams(std::unordered_set<InputStreamPtr> sin,
     auto comp = std::less<typename InputStream::BlockType::value_type>();
 
     for (const auto& s : sin) {
-        s->Open();
-        if (!s->Empty()) {
+        s->open();
+        if (!s->empty()) {
             sinp.insert(s.get());
         }
     }
@@ -183,7 +183,7 @@ OutputStreamPtr merge_streams(std::unordered_set<InputStreamPtr> sin,
     }
 
     for (const auto& s : sin) {
-        s->Close();
+        s->close();
     }
     return sout;
 }

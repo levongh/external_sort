@@ -15,9 +15,9 @@ public:
     using BlockType  = Block;
     using Iterator  = typename Block::iterator;
 
-    void Open();
-    void Close();
-    bool Empty();
+    void open();
+    void close();
+    bool empty();
 
     typename Block::value_type& Front();
     Block* FrontBlock();
@@ -43,22 +43,22 @@ private:
 };
 
 template <typename Block, typename Reader, typename MemoryPolicy>
-void BlockInputStream<Block, Reader, MemoryPolicy>::Open()
+void BlockInputStream<Block, Reader, MemoryPolicy>::open()
 {
-    Reader::Open();
+    Reader::open();
     empty_ = false;
     tinput_ = std::thread(&BlockInputStream::InputLoop, this);
 }
 
 template <typename Block, typename Reader, typename MemoryPolicy>
-void BlockInputStream<Block, Reader, MemoryPolicy>::Close()
+void BlockInputStream<Block, Reader, MemoryPolicy>::close()
 {
-    Reader::Close();
+    Reader::close();
     tinput_.join();
 }
 
 template <typename Block, typename Reader, typename MemoryPolicy>
-bool BlockInputStream<Block, Reader, MemoryPolicy>::Empty()
+bool BlockInputStream<Block, Reader, MemoryPolicy>::empty()
 {
     if (!m_block) {
         WaitForBlock();
@@ -80,7 +80,7 @@ void BlockInputStream<Block, Reader, MemoryPolicy>::Pop()
     if (m_blockIter == m_block->end()) {
         auto tmp = m_block;
         PopBlock();
-        MemoryPolicy::Free(tmp);
+        MemoryPolicy::free(tmp);
     }
 }
 
@@ -100,7 +100,7 @@ void BlockInputStream<Block, Reader, MemoryPolicy>::PopBlock()
 template <typename Block, typename Reader, typename MemoryPolicy>
 void BlockInputStream<Block, Reader, MemoryPolicy>::InputLoop()
 {
-    while (!Reader::Empty()) {
+    while (!Reader::empty()) {
         Block* block = ReadBlock();
 
         if (block) {
@@ -119,11 +119,11 @@ template <typename Block, typename Reader, typename MemoryPolicy>
 auto BlockInputStream<Block, Reader, MemoryPolicy>::ReadBlock()
     -> Block*
 {
-    Block* block = MemoryPolicy::Allocate();
+    Block* block = MemoryPolicy::allocate();
 
-    Reader::Read(block);
+    Reader::read(block);
     if (block->empty()) {
-        MemoryPolicy::Free(block);
+        MemoryPolicy::free(block);
         block = nullptr;
     }
 
