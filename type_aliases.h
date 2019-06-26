@@ -21,9 +21,8 @@ struct Types
 
     // Block Types
     using Block = std::vector<ValueType>;
-    using BlockPtr = typename BlockTraits<Block>::BlockPtr;
+    using BlockPtr = Block*;
     using BlockPool = typename BlockMemoryPolicy<Block>::BlockPool;
-    //using BlockTraits = typename BlockTraits<Block>;
 
     // Stream Types
     using IStream = BlockInputStream<Block,

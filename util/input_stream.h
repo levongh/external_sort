@@ -6,8 +6,6 @@
 #include <atomic>
 #include <queue>
 
-#include "block_types.h"
-
 namespace external_sort {
 
 template <typename Block, typename Reader, typename MemoryPolicy>
@@ -15,9 +13,9 @@ class BlockInputStream : public Reader, public MemoryPolicy
 {
 public:
     using BlockType = Block;
-    using BlockPtr  = typename BlockTraits<Block>::BlockPtr;
-    using Iterator  = typename BlockTraits<Block>::Iterator;
-    using ValueType = typename BlockTraits<Block>::ValueType;
+    using BlockPtr  = Block*;
+    using Iterator  = typename Block::iterator;
+    using ValueType = typename Block::value_type;
 
     void Open();
     void Close();

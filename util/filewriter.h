@@ -4,16 +4,14 @@
 #include <queue>
 #include <fstream>
 
-#include "block_types.h"
-
 namespace external_sort {
 
 template <typename Block>
 class FileWriter
 {
 public:
-    using BlockPtr = typename BlockTraits<Block>::BlockPtr;
-    using ValueType = typename BlockTraits<Block>::ValueType;
+    using BlockPtr = Block*;
+    using ValueType = typename Block::value_type;
 
     /// Policy interface
     void Open();

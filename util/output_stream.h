@@ -6,30 +6,28 @@
 #include <atomic>
 #include <queue>
 
-#include "block_types.h"
-
 namespace external_sort {
 
 template <typename Block, typename Writer, typename MemoryPolicy>
 class BlockOutputStream : public Writer, public MemoryPolicy
 {
-  public:
+public:
     using BlockType = Block;
-    using BlockPtr  = typename BlockTraits<Block>::BlockPtr;
-    using Iterator  = typename BlockTraits<Block>::Iterator;
-    using ValueType = typename BlockTraits<Block>::ValueType;
+    using BlockPtr  = Block*;
+    using Iterator  = typename Block::iterator;
+    using ValueType = typename Block::value_type;
 
     void Open();
     void Close();
 
-    void Push(const ValueType& value);  // push a single value
-    void PushBlock(BlockPtr block);     // push entire block
-    void WriteBlock(BlockPtr block);    // write a block directly into a file
+    void Push(const ValueType& value);
+    void PushBlock(BlockPtr block);
+    void WriteBlock(BlockPtr block);
 
-  private:
+private:
     void OutputLoop();
 
-  private:
+private:
 
     mutable std::condition_variable cv_;
     mutable std::mutex mtx_;

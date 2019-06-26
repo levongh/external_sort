@@ -6,15 +6,13 @@
 #include <stack>
 #include <cassert>
 
-#include "block_types.h"
-
 namespace external_sort {
 
 template <typename Block>
 class BlockMemoryPolicy
 {
 public:
-    using BlockPtr = typename BlockTraits<Block>::BlockPtr;
+    using BlockPtr = Block*;
     class BlockPool;
     using BlockPoolPtr = std::shared_ptr<BlockPool>;
 
@@ -22,76 +20,89 @@ public:
     {
     public:
         BlockPool(size_t memsize, size_t memblocks)
-            : blocks_(memblocks)
-            , blocks_cnt_(0)
-            , blocks_allocated_(0)
+            : m_blocks(memblocks)
+            , m_blocksAllocated(0)
         {
             size_t block_size = memsize / memblocks /
-                (sizeof(typename BlockTraits<Block>::ValueType));
+                (sizeof(typename Block::value_type));
 
-            while (pool_.size() < blocks_) {
+            while (m_pool.size() < m_blocks) {
                 BlockPtr block(new Block);
                 block->reserve(block_size);
-                pool_.push(block);
+                m_pool.push(block);
             }
         }
 
         ~BlockPool()
         {
-            while (!pool_.empty()) {
-                BlockPtr block = pool_.top();
-                BlockTraits<Block>::DeletePtr(block);
-                pool_.pop();
+            while (!m_pool.empty()) {
+                BlockPtr block = m_pool.top();
+                delete block;
+                m_pool.pop();
             }
         }
 
     public:
         size_t Allocated() const
         {
-            std::unique_lock<std::mutex> lck(mtx_);
-            return blocks_allocated_;
+            std::unique_lock<std::mutex> lck(m_mutex);
+            return m_blocksAllocated;
         }
 
         BlockPtr Allocate()
         {
-            std::unique_lock<std::mutex> lck(mtx_);
-            blocks_cnt_++;
-            while (pool_.empty()) {
-                cv_.wait(lck);
+            std::unique_lock<std::mutex> lck(m_mutex);
+            while (m_pool.empty()) {
+                m_cv.wait(lck);
             }
-            BlockPtr block = pool_.top();
-            pool_.pop();
-            blocks_allocated_++;
+            BlockPtr block = m_pool.top();
+            m_pool.pop();
+            ++m_blocksAllocated;
             return block;
         }
 
         void Free(BlockPtr block)
         {
-            std::unique_lock<std::mutex> lck(mtx_);
-            blocks_allocated_--;
+            std::unique_lock<std::mutex> lck(m_mutex);
+            --m_blocksAllocated;
             block->resize(0);
-            pool_.push(block);
-            cv_.notify_one();
+            m_pool.push(block);
+            m_cv.notify_one();
         }
 
     private:
-        mutable std::mutex mtx_;
-        std::condition_variable cv_;
-        std::stack<BlockPtr> pool_;
-        size_t blocks_;
-        size_t blocks_cnt_;
-        size_t blocks_allocated_;
+        mutable std::mutex m_mutex;
+        std::condition_variable m_cv;
+        std::stack<BlockPtr> m_pool;
+        size_t m_blocks;
+        size_t m_blocksAllocated;
     };
 
-    inline size_t Allocated() const { return mem_pool_->Allocated(); }
-    inline BlockPtr Allocate() { return mem_pool_->Allocate(); }
-    inline void Free(BlockPtr block) { mem_pool_->Free(block); }
+public:
+    inline size_t Allocated() const
+    {
+        return mem_pool_->Allocated();
+    }
 
-    BlockPoolPtr mem_pool() { return mem_pool_; }
-    void set_mem_pool(size_t memsize, size_t memblocks) {
+    inline BlockPtr Allocate()
+    {
+        return mem_pool_->Allocate();
+    }
+
+    inline void Free(BlockPtr block)
+    {
+        mem_pool_->Free(block);
+    }
+
+    void set_mem_pool(size_t memsize, size_t memblocks)
+    {
         mem_pool_ = std::make_shared<BlockPool>(memsize, memblocks);
-    };
-    void set_mem_pool(BlockPoolPtr pool) { mem_pool_ = pool; };
+    }
+
+    void set_mem_pool(BlockPoolPtr pool)
+    {
+        mem_pool_ = pool;
+    }
 
 private:
     BlockPoolPtr mem_pool_ = {nullptr};

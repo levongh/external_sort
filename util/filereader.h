@@ -4,8 +4,6 @@
 #include <fstream>
 #include <cstdio>
 
-#include "block_types.h"
-
 namespace external_sort
 {
 
@@ -13,8 +11,8 @@ template <typename Block>
 class FileReader
 {
 public:
-    using BlockPtr = typename BlockTraits<Block>::BlockPtr;
-    using ValueType = typename BlockTraits<Block>::ValueType;
+    using BlockPtr = Block*;
+    using ValueType = typename Block::value_type;
 
     /// Policy interface
     void Open()

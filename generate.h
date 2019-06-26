@@ -1,6 +1,5 @@
 #pragma once
 
-#include "util/block_types.h"
 #include "util/output_stream.h"
 #include "util/utility.h"
 
