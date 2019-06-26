@@ -13,9 +13,26 @@ class AsyncFuncs
 {
 public:
     template <class Fn, class... Args>
-    void Async(Fn&& fn, Args&&... args);
+    void Async(Fn&& fn, Args&&... args)
+    {
+        std::unique_lock<std::mutex> lck(m_mutex);
+        ++m_funcsRunning;
+        std::thread task(&AsyncFuncs::RunFunc<Fn, Args...>, this,
+                std::forward<Fn>(fn), std::forward<Args>(args)...);
+        task.detach();
+    }
 
-    ResultType GetAny();
+    ResultType get()
+    {
+        std::unique_lock<std::mutex> lck(m_mutex);
+        while (m_funcsReady.empty()) {
+            m_cv.wait(lck);
+        }
+
+        ResultType result = m_funcsReady.front();
+        m_funcsReady.pop_front();
+        return result;
+    }
 
     bool Empty() const
     {
@@ -27,69 +44,36 @@ public:
         return Ready() + Running();
     }
 
-    size_t Ready() const;
-    size_t Running() const;
+    size_t Ready() const
+    {
+        return m_funcsRunning;
+    }
+
+    size_t Running() const
+    {
+        std::unique_lock<std::mutex> lck(m_mutex);
+        return m_funcsReady.size();
+    }
 
 private:
     template <class Fn, class... Args>
-    void RunFunc(Fn&& fn, Args&&... args);
+    void RunFunc(Fn&& fn, Args&&... args)
+    {
+        ResultType result = fn(std::forward<Args>(args)...);
 
-private:
-    mutable std::mutex mtx_;
-    std::condition_variable cv_;
-
-    std::atomic<size_t> funcs_running_ = {0};
-    std::list<ResultType> funcs_ready_;
-};
-
-template <typename ResultType>
-size_t AsyncFuncs<ResultType>::Running() const
-{
-    return funcs_running_;
-}
-
-template <typename ResultType>
-size_t AsyncFuncs<ResultType>::Ready() const
-{
-    std::unique_lock<std::mutex> lck(mtx_);
-    return funcs_ready_.size();
-}
-
-template <typename ResultType>
-ResultType AsyncFuncs<ResultType>::GetAny()
-{
-    std::unique_lock<std::mutex> lck(mtx_);
-    while (funcs_ready_.empty()) {
-        cv_.wait(lck);
+        std::unique_lock<std::mutex> lck(m_mutex);
+        m_funcsReady.push_back(result);
+        --m_funcsRunning;
+        m_cv.notify_one();
     }
 
-    ResultType result = funcs_ready_.front();
-    funcs_ready_.pop_front();
-    return result;
-}
+private:
+    mutable std::mutex m_mutex;
+    std::condition_variable m_cv;
 
-template <typename ResultType>
-template <class Fn, class... Args>
-void AsyncFuncs<ResultType>::Async(Fn&& fn, Args&&... args)
-{
-    std::unique_lock<std::mutex> lck(mtx_);
-    funcs_running_++;
-    std::thread task(&AsyncFuncs::RunFunc<Fn, Args...>, this,
-                     std::forward<Fn>(fn), std::forward<Args>(args)...);
-    task.detach();
-}
-
-template <typename ResultType>
-template <class Fn, class... Args>
-void AsyncFuncs<ResultType>::RunFunc(Fn&& fn, Args&&... args)
-{
-    ResultType result = fn(std::forward<Args>(args)...);
-
-    std::unique_lock<std::mutex> lck(mtx_);
-    funcs_ready_.push_back(result);
-    funcs_running_--;
-    cv_.notify_one();
-}
+    std::atomic<size_t> m_funcsRunning = {0};
+    std::list<ResultType> m_funcsReady;
+};
 
 } // namespace external_sort
 

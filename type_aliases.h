@@ -44,8 +44,7 @@ typename Types<ValueType>::OStreamPtr
 sort_and_write(typename Types<ValueType>::BlockPtr block,
                typename Types<ValueType>::OStreamPtr ostream)
 {
-    std::sort(block->begin(), block->end(),
-              typename Types<ValueType>::Comparator());
+    std::sort(block->begin(), block->end(), typename Types<ValueType>::Comparator());
     ostream->WriteBlock(block);
     return ostream;
 }

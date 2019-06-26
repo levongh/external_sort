@@ -56,7 +56,7 @@ void merge(external_sort::MergeParams& params)
         // 3) There are simply too many already ongoing merges
         while ((files.size() < params.mrg.kmerge && !merges.Empty()) ||
                (merges.Ready() > 0) || (merges.Running() >= params.mrg.merges)) {
-            auto ostream_ready = merges.GetAny();
+            auto ostream_ready = merges.get();
             if (ostream_ready) {
                 files.push_back(ostream_ready->output_filename());
             }
@@ -64,16 +64,7 @@ void merge(external_sort::MergeParams& params)
     }
 
     if (files.size()) {
-        if (rename(files.front().c_str(), params.mrg.ofile.c_str()) == 0) {
-            //LOG_IMP(("Output file: %s") % params.mrg.ofile);
-        } else {
-            params.err.none = false;
-            params.err.stream << "Cannot rename " << files.front()
-                              << " to " << params.mrg.ofile;
-        }
-    } else {
-        params.err.none = false;
-        params.err.stream << "Merge failed. No input";
+        rename(files.front().c_str(), params.mrg.ofile.c_str());
     }
 }
 
@@ -83,69 +74,7 @@ void sort(external_sort::SplitParams& sp, external_sort::MergeParams& mp)
 {
     split<ValueType>(sp);
 
-    if (sp.err.none) {
-        mp.mrg.ifiles = sp.out.ofiles;
-        merge<ValueType>(mp);
-    }
+    mp.mrg.ifiles = sp.out.ofiles;
+    merge<ValueType>(mp);
 }
-
-//! External Check
-template <typename ValueType>
-bool check(external_sort::CheckParams& params)
-{
-    using namespace external_sort;
-    auto comp = typename ValueTraits<ValueType>::Comparator();
-    auto vtos = typename ValueTraits<ValueType>::Value2Str();
-
-    auto istream = std::make_shared<typename Types<ValueType>::IStream>();
-    istream->set_mem_pool(memsize_in_bytes(params.mem.size, params.mem.unit),
-                          params.mem.blocks);
-    istream->set_input_filename(params.chk.ifile);
-    istream->Open();
-
-    size_t cnt = 0, bad = 0;
-    if (!istream->Empty()) {
-        auto vcurr  = istream->Front();
-        auto vprev  = vcurr;
-        auto vfirst = vprev;
-        auto vmin   = vfirst;
-        auto vmax   = vfirst;
-        istream->Pop();
-        ++cnt;
-
-        while (!istream->Empty()) {
-            vcurr = istream->Front();
-            if (comp(vcurr, vprev)) {
-                if (bad < 10) {
-                    params.err.stream << "Out of order! cnt = " << cnt
-                                      << " prev = " << vtos(vprev)
-                                      << " curr = " << vtos(vcurr) << "\n";
-                }
-                bad++;
-            }
-            if (comp(vcurr, vmin)) {
-                vmin = vcurr;
-            }
-            if (comp(vmax, vcurr)) {
-                vmax = vcurr;
-            }
-            vprev = vcurr;
-            istream->Pop();
-            ++cnt;
-        }
-        if (bad) {
-            params.err.none = false;
-            params.err.stream << "Total elements out of order: " << bad << "\n";
-        }
-        params.err.stream << "\tmin = " << vtos(vmin)
-                          << ", max = " << vtos(vmax) << "\n";
-        params.err.stream << "\tfirst = " << vtos(vfirst)
-                          << ", last = " << vtos(vprev) << "\n";
-    }
-    params.err.stream << "\tsorted = " << ((bad) ? "false" : "true")
-                      << ", elems = " << cnt << ", bad = " << bad;
-    istream->Close();
-    return bad == 0;
-}
-
 

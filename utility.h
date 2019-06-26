@@ -20,21 +20,9 @@ struct MemParams
     size_t  blocks = 2;                 // number of blocks memory is divided by
 };
 
-struct ErrParams
-{
-    bool none = true;                   // error status
-    std::ostringstream stream;          // error stream
-
-    operator bool () const { return !none; }
-    operator std::string () const { return stream.str(); }
-    std::string msg() const { return stream.str(); }
-
-};
-
 struct SplitParams
 {
     MemParams mem;                      // memory params
-    ErrParams err;                      // error params
     struct {
         std::string ifile;              // input file to split
         std::string ofile;              // output file prefix (prefix of splits)
@@ -48,7 +36,6 @@ struct SplitParams
 struct MergeParams
 {
     MemParams mem;                      // memory params
-    ErrParams err;                      // error params
     struct {
         size_t merges    = 4;           // number of simultaneous merges
         size_t kmerge    = 4;           // number of streams to merge at a time
@@ -60,19 +47,9 @@ struct MergeParams
     } mrg;
 };
 
-struct CheckParams
-{
-    MemParams mem;                      // memory params
-    ErrParams err;                      // error params
-    struct {
-        std::string ifile;              // input file to check it it's sorted
-    } chk;
-};
-
 struct GenerateParams
 {
     MemParams mem;                      // memory params
-    ErrParams err;                      // error params
     struct {
         size_t fsize = 0;               // file size to generate (in mem.units)
         std::string ofile;              // output file
@@ -115,16 +92,7 @@ struct ValueTraits
     using Comparator = std::less<ValueType>;
     using Generator = DefaultValueGenerator<ValueType>;
     using Value2Str = DefaultValue2Str<ValueType>;
-
-    // It can be extended to support non-POD types:
-    // static const size_t ValueSize = sizeof(ValueType);
-    // static inline int Serialize(...);
-    // static inline int Deserialize(...);
 };
-
-//! Stream set
-template <typename T>
-using StreamSet = std::unordered_set<T>;
 
 const char* DEF_SPL_TMP_SFX = "split";
 const char* DEF_MRG_TMP_SFX = "merge";

@@ -12,7 +12,7 @@ void copy_stream(InputStream* sin, OutputStream* sout)
 }
 
 template <typename InputStream, typename OutputStream, typename Comparator>
-void merge_2streams(StreamSet<InputStream*>& sin, OutputStream* sout,
+void merge_2streams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
                     Comparator comp)
 {
     if (sin.size() != 2) {
@@ -38,7 +38,7 @@ void merge_2streams(StreamSet<InputStream*>& sin, OutputStream* sout,
 }
 
 template <typename InputStream, typename OutputStream, typename Comparator>
-void merge_3streams(StreamSet<InputStream*>& sin, OutputStream* sout,
+void merge_3streams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
                     Comparator comp)
 {
     if (sin.size() != 3) {
@@ -70,7 +70,7 @@ void merge_3streams(StreamSet<InputStream*>& sin, OutputStream* sout,
 
 // merges 4 streams
 template <typename InputStream, typename OutputStream, typename Comparator>
-void merge_4streams(StreamSet<InputStream*>& sin, OutputStream* sout,
+void merge_4streams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
                     Comparator comp)
 {
     if (sin.size() != 4) {
@@ -108,7 +108,7 @@ void merge_4streams(StreamSet<InputStream*>& sin, OutputStream* sout,
 }
 
 template <typename InputStream, typename OutputStream, typename Comparator>
-void merge_nstreams(StreamSet<InputStream*>& sin, OutputStream* sout,
+void merge_nstreams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
                     Comparator comp)
 {
     if (sin.size() <= 4) {
@@ -154,16 +154,12 @@ void merge_nstreams(StreamSet<InputStream*>& sin, OutputStream* sout,
 }
 
 template <typename InputStreamPtr, typename OutputStreamPtr>
-OutputStreamPtr merge_streams(StreamSet<InputStreamPtr> sin,
+OutputStreamPtr merge_streams(std::unordered_set<InputStreamPtr> sin,
                               OutputStreamPtr sout)
 {
-    // Make a new StreamSet with raw pointers to pass to the merge functions:
-    // 1) Raw pointers are faster
-    // 2) The merge functions will shrink the set as streams get exhausted
-    // 3) The original StreamSet is needed to close all streams, when it's done
     using InputStream = typename InputStreamPtr::element_type;
     using OutputStream = typename OutputStreamPtr::element_type;
-    StreamSet<InputStream*> sinp;
+    std::unordered_set<InputStream*> sinp;
     OutputStream* soutp = sout.get();
 
     auto comp = typename Types<
