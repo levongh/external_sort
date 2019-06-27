@@ -40,7 +40,7 @@ sort_and_write(typename Types<ValueType>::BlockPtr block,
                typename Types<ValueType>::OStreamPtr ostream)
 {
     std::sort(block->begin(), block->end(), typename std::less<ValueType>());
-    ostream->WriteBlock(block);
+    ostream->writeBlock(block);
     return ostream;
 }
 

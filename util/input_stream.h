@@ -19,16 +19,16 @@ public:
     void close();
     bool empty();
 
-    typename Block::value_type& Front();
-    Block* FrontBlock();
-    Block* ReadBlock();
+    typename Block::value_type& front();
+    Block* block();
 
-    void Pop();
-    void PopBlock();
+    void pop();
+    void null();
 
 private:
-    void InputLoop();
-    void WaitForBlock();
+    Block* read();
+    void loop();
+    void waitBlock();
 
 private:
     mutable std::condition_variable m_cv;
@@ -47,7 +47,7 @@ void BlockInputStream<Block, Reader, MemoryPolicy>::open()
 {
     Reader::open();
     empty_ = false;
-    tinput_ = std::thread(&BlockInputStream::InputLoop, this);
+    tinput_ = std::thread(&BlockInputStream::loop, this);
 }
 
 template <typename Block, typename Reader, typename MemoryPolicy>
@@ -61,47 +61,47 @@ template <typename Block, typename Reader, typename MemoryPolicy>
 bool BlockInputStream<Block, Reader, MemoryPolicy>::empty()
 {
     if (!m_block) {
-        WaitForBlock();
+        waitBlock();
     }
     return empty_ && !m_block;
 }
 
 template <typename Block, typename Reader, typename MemoryPolicy>
-auto BlockInputStream<Block, Reader, MemoryPolicy>::Front()
+auto BlockInputStream<Block, Reader, MemoryPolicy>::front()
     -> typename Block::value_type&
 {
     return *m_blockIter;
 }
 
 template <typename Block, typename Reader, typename MemoryPolicy>
-void BlockInputStream<Block, Reader, MemoryPolicy>::Pop()
+void BlockInputStream<Block, Reader, MemoryPolicy>::pop()
 {
     ++m_blockIter;
     if (m_blockIter == m_block->end()) {
         auto tmp = m_block;
-        PopBlock();
+        null();
         MemoryPolicy::free(tmp);
     }
 }
 
 template <typename Block, typename Reader, typename MemoryPolicy>
-auto BlockInputStream<Block, Reader, MemoryPolicy>::FrontBlock()
+auto BlockInputStream<Block, Reader, MemoryPolicy>::block()
     -> Block*
 {
     return m_block;
 }
 
 template <typename Block, typename Reader, typename MemoryPolicy>
-void BlockInputStream<Block, Reader, MemoryPolicy>::PopBlock()
+void BlockInputStream<Block, Reader, MemoryPolicy>::null()
 {
     m_block = nullptr;
 }
 
 template <typename Block, typename Reader, typename MemoryPolicy>
-void BlockInputStream<Block, Reader, MemoryPolicy>::InputLoop()
+void BlockInputStream<Block, Reader, MemoryPolicy>::loop()
 {
     while (!Reader::empty()) {
-        Block* block = ReadBlock();
+        Block* block = read();
 
         if (block) {
             std::unique_lock<std::mutex> lck(m_mtx);
@@ -116,7 +116,7 @@ void BlockInputStream<Block, Reader, MemoryPolicy>::InputLoop()
 }
 
 template <typename Block, typename Reader, typename MemoryPolicy>
-auto BlockInputStream<Block, Reader, MemoryPolicy>::ReadBlock()
+auto BlockInputStream<Block, Reader, MemoryPolicy>::read()
     -> Block*
 {
     Block* block = MemoryPolicy::allocate();
@@ -131,7 +131,7 @@ auto BlockInputStream<Block, Reader, MemoryPolicy>::ReadBlock()
 }
 
 template <typename Block, typename Reader, typename MemoryPolicy>
-void BlockInputStream<Block, Reader, MemoryPolicy>::WaitForBlock()
+void BlockInputStream<Block, Reader, MemoryPolicy>::waitBlock()
 {
     std::unique_lock<std::mutex> lck(m_mtx);
     while (m_queue.empty() && !empty_) {

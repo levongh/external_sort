@@ -27,22 +27,22 @@ void split(external_sort::SplitParams& params)
     }
 
     while (!istream->empty()) {
-        auto block = istream->FrontBlock();
-        istream->PopBlock();
+        auto block = istream->block();
+        istream->null();
 
         auto ostream = std::make_shared<typename Types<ValueType>::OStream>();
         ostream->set_mem_pool(mem_pool);
         ostream->setFilename(
             make_tmp_filename(params.spl.ofile, DEF_SPL_TMP_SFX, ++file_cnt));
-        ostream->Open();
+        ostream->open();
 
-        splits.Async(&sort_and_write<ValueType>,
+        splits.addTask(&sort_and_write<ValueType>,
                      std::move(block), std::move(ostream));
 
-        while ((splits.Ready() > 0) || (splits.Running() && istream->empty())) {
+        while ((splits.ready() > 0) || (splits.running() && istream->empty())) {
             auto ostream_ready = splits.get();
             if (ostream_ready) {
-                ostream_ready->Close();
+                ostream_ready->close();
                 params.out.ofiles.push_back(ostream_ready->getFilename());
             }
         }

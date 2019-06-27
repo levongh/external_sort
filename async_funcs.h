@@ -13,11 +13,11 @@ class AsyncFuncs
 {
 public:
     template <class Fn, class... Args>
-    void Async(Fn&& fn, Args&&... args)
+    void addTask(Fn&& fn, Args&&... args)
     {
         std::unique_lock<std::mutex> lck(m_mutex);
         ++m_funcsRunning;
-        std::thread task(&AsyncFuncs::RunFunc<Fn, Args...>, this,
+        std::thread task(&AsyncFuncs::run<Fn, Args...>, this,
                 std::forward<Fn>(fn), std::forward<Args>(args)...);
         task.detach();
     }
@@ -34,30 +34,30 @@ public:
         return result;
     }
 
-    bool Empty() const
+    bool empty() const
     {
-        return All() == 0;
+        return tasks() == 0;
     }
 
-    size_t All() const
-    {
-        return Ready() + Running();
-    }
-
-    size_t Ready() const
+    size_t ready() const
     {
         return m_funcsRunning;
     }
 
-    size_t Running() const
+    size_t running() const
     {
         std::unique_lock<std::mutex> lck(m_mutex);
         return m_funcsReady.size();
     }
 
 private:
+    size_t tasks() const
+    {
+        return ready() + running();
+    }
+
     template <class Fn, class... Args>
-    void RunFunc(Fn&& fn, Args&&... args)
+    void run(Fn&& fn, Args&&... args)
     {
         ResultType result = fn(std::forward<Args>(args)...);
 

@@ -3,8 +3,6 @@
 #include "util/output_stream.h"
 #include "util/utility.h"
 
-
-//! External Generate
 template <typename ValueType>
 void generate(const external_sort::GenerateParams& params)
 {
@@ -17,11 +15,11 @@ void generate(const external_sort::GenerateParams& params)
     ostream->set_mem_pool(memsize_in_bytes(params.mem.size, params.mem.unit),
             params.mem.blocks);
     ostream->setFilename(params.gen.ofile);
-    ostream->Open();
+    ostream->open();
 
     for (size_t i = 0; i < gen_elements; i++) {
-        ostream->Push(generator());
+        ostream->push(generator());
     }
 
-    ostream->Close();
+    ostream->close();
 }

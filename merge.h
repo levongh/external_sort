@@ -19,42 +19,30 @@ void merge(external_sort::MergeParams& params)
     size_t mem_ostream = mem_merge / 2;
     size_t mem_istream = mem_merge - mem_ostream;
 
-    // Merge files while there is something to merge or there are ongoing merges
     auto files = params.mrg.ifiles;
-    while (files.size() > 1 || !merges.Empty()) {
-        // create a set of input streams with next kmerge files from the queue
+    while (files.size() > 1 || !merges.empty()) {
         std::unordered_set<typename Types<ValueType>::IStreamPtr> istreams;
         while (istreams.size() < params.mrg.kmerge && !files.empty()) {
-            // create input stream
             auto is = std::make_shared<typename Types<ValueType>::IStream>();
             is->set_mem_pool(mem_istream, params.mrg.stmblocks);
             is->setFilename(files.front());
             is->setFileRM(params.mrg.rm_input);
-            // add to the set
             istreams.insert(is);
             files.pop_front();
         }
 
-        // create an output stream
         auto ostream = std::make_shared<typename Types<ValueType>::OStream>();
         ostream->set_mem_pool(mem_ostream, params.mrg.stmblocks);
         ostream->setFilename(make_tmp_filename(
             (params.mrg.tfile.size() ? params.mrg.tfile : params.mrg.ofile),
             DEF_MRG_TMP_SFX, ++file_cnt));
 
-        // asynchronously merge and write to the output stream
-        merges.Async(&merge_streams<typename Types<ValueType>::IStreamPtr,
+        merges.addTask(&merge_streams<typename Types<ValueType>::IStreamPtr,
                                     typename Types<ValueType>::OStreamPtr>,
                      std::move(istreams), std::move(ostream));
 
-        // Wait/get results of asynchroniously running merges if:
-        // 1) Too few files ready to be merged, while still running merges.
-        //    In other words, more files can be merged at once than
-        //    currently available. So wait for more files.
-        // 2) There are completed (ready) merges; results shall be collected
-        // 3) There are simply too many already ongoing merges
-        while ((files.size() < params.mrg.kmerge && !merges.Empty()) ||
-               (merges.Ready() > 0) || (merges.Running() >= params.mrg.merges)) {
+        while ((files.size() < params.mrg.kmerge && !merges.empty()) ||
+               (merges.ready() > 0) || (merges.running() >= params.mrg.merges)) {
             auto ostream_ready = merges.get();
             if (ostream_ready) {
                 files.push_back(ostream_ready->getFilename());

@@ -6,8 +6,8 @@ template <typename InputStream, typename OutputStream>
 void copy_stream(InputStream* sin, OutputStream* sout)
 {
     while (!sin->empty()) {
-        sout->Push(sin->Front());
-        sin->Pop();
+        sout->push(sin->front());
+        sin->pop();
     }
 }
 
@@ -24,9 +24,9 @@ void merge_2streams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
     InputStream* smin = s1;
 
     for (;;) {
-        smin = comp(s1->Front(), s2->Front()) ? s1 : s2;
-        sout->Push(smin->Front());
-        smin->Pop();
+        smin = comp(s1->front(), s2->front()) ? s1 : s2;
+        sout->push(smin->front());
+        smin->pop();
         if (smin->empty()) {
             sin.erase(smin);
             break;
@@ -49,13 +49,13 @@ void merge_3streams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
     InputStream* smin = s1;
 
     for (;;) {
-        if (comp(s1->Front(),s2->Front())) {
-            smin = comp(s1->Front(), s3->Front()) ? s1 : s3;
+        if (comp(s1->front(),s2->front())) {
+            smin = comp(s1->front(), s3->front()) ? s1 : s3;
         } else {
-            smin = comp(s2->Front(), s3->Front()) ? s2 : s3;
+            smin = comp(s2->front(), s3->front()) ? s2 : s3;
         }
-        sout->Push(smin->Front());
-        smin->Pop();
+        sout->push(smin->front());
+        smin->pop();
         if (smin->empty()) {
             sin.erase(smin);
             break;
@@ -80,19 +80,19 @@ void merge_4streams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
     InputStream* smin = s1;
 
     for (;;) {
-        if (comp(s1->Front(), s2->Front())) {
-            if (comp(s3->Front(), s4->Front()))
-                smin = comp(s1->Front(), s3->Front()) ? s1 : s3;
+        if (comp(s1->front(), s2->front())) {
+            if (comp(s3->front(), s4->front()))
+                smin = comp(s1->front(), s3->front()) ? s1 : s3;
             else
-                smin = comp(s1->Front(), s4->Front()) ? s1 : s4;
+                smin = comp(s1->front(), s4->front()) ? s1 : s4;
         } else {
-            if (comp(s3->Front(), s4->Front()))
-                smin = comp(s2->Front(), s3->Front()) ? s2 : s3;
+            if (comp(s3->front(), s4->front()))
+                smin = comp(s2->front(), s3->front()) ? s2 : s3;
             else
-                smin = comp(s2->Front(), s4->Front()) ? s2 : s4;
+                smin = comp(s2->front(), s4->front()) ? s2 : s4;
         }
-        sout->Push(smin->Front());
-        smin->Pop();
+        sout->push(smin->front());
+        smin->pop();
         if (smin->empty()) {
             sin.erase(smin);
             break;
@@ -108,9 +108,7 @@ void merge_nstreams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
     if (sin.size() <= 4) {
         return;
     }
-
     InputStream* smin;
-
     std::vector<InputStream*> heap;
     for (auto& s : sin) {
         if (!s->empty()) {
@@ -118,26 +116,21 @@ void merge_nstreams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
         }
     }
     auto hcomp = [ &comp ] (InputStream*& s1, InputStream*& s2) {
-        return comp(s2->Front(), s1->Front());
+        return comp(s2->front(), s1->front());
     };
     std::make_heap(heap.begin(), heap.end(), hcomp);
 
     while (heap.size() > 4) {
-        // find minimum element in the input streams
         smin = heap.front();
         std::pop_heap(heap.begin(), heap.end(), hcomp);
 
-        // output the minumum element
-        sout->Push(smin->Front());
-        smin->Pop();
+        sout->push(smin->front());
+        smin->pop();
 
         if (smin->empty()) {
-            // end of this stream
             heap.pop_back();
             sin.erase(smin);
         } else {
-            // there is more data in the stream,
-            // push it back to the heap
             heap.back() = smin;
             std::push_heap(heap.begin(), heap.end(), hcomp);
         }
@@ -162,9 +155,8 @@ OutputStreamPtr merge_streams(std::unordered_set<InputStreamPtr> sin,
             sinp.insert(s.get());
         }
     }
-
     if (sinp.size() > 0) {
-        sout->Open();
+        sout->open();
         if (sinp.size() > 4) {
             merge_nstreams(sinp, soutp, comp);
         } else if (sinp.size() == 4) {
@@ -176,9 +168,8 @@ OutputStreamPtr merge_streams(std::unordered_set<InputStreamPtr> sin,
         } else if (sinp.size() == 1) {
             copy_stream(*sinp.begin(), soutp);
         }
-        sout->Close();
+        sout->close();
     } else {
-        //LOG_ERR(("No input streams to merge!"));
         sout.reset();
     }
 

@@ -12,15 +12,15 @@ template <typename Block, typename Writer, typename MemoryPolicy>
 class BlockOutputStream : public Writer, public MemoryPolicy
 {
 public:
-    void Open();
-    void Close();
+    void open();
+    void close();
 
-    void Push(const typename Block::value_type& value);
-    void PushBlock(Block* block);
-    void WriteBlock(Block* block);
+    void push(const typename Block::value_type& value);
+    void writeBlock(Block* block);
 
 private:
-    void OutputLoop();
+    void loop();
+    void push(Block* block);
 
 private:
 
@@ -35,17 +35,17 @@ private:
 };
 
 template <typename Block, typename Writer, typename MemoryPolicy>
-void BlockOutputStream<Block, Writer, MemoryPolicy>::Open()
+void BlockOutputStream<Block, Writer, MemoryPolicy>::open()
 {
     Writer::open();
     stopped_ = false;
-    toutput_ = std::thread(&BlockOutputStream::OutputLoop, this);
+    toutput_ = std::thread(&BlockOutputStream::loop, this);
 }
 
 template <typename Block, typename Writer, typename MemoryPolicy>
-void BlockOutputStream<Block, Writer, MemoryPolicy>::Close()
+void BlockOutputStream<Block, Writer, MemoryPolicy>::close()
 {
-    PushBlock(m_block);
+    push(m_block);
     stopped_ = true;
     m_cv.notify_one();
     toutput_.join();
@@ -53,7 +53,7 @@ void BlockOutputStream<Block, Writer, MemoryPolicy>::Close()
 }
 
 template <typename Block, typename Writer, typename MemoryPolicy>
-void BlockOutputStream<Block, Writer, MemoryPolicy>::Push(
+void BlockOutputStream<Block, Writer, MemoryPolicy>::push(
     const typename Block::value_type& value)
 {
     if (!m_block) {
@@ -62,13 +62,13 @@ void BlockOutputStream<Block, Writer, MemoryPolicy>::Push(
     m_block->push_back(value);
 
     if (m_block->size() == m_block->capacity()) {
-        PushBlock(m_block);
+        push(m_block);
         m_block = nullptr;
     }
 }
 
 template <typename Block, typename Writer, typename MemoryPolicy>
-void BlockOutputStream<Block, Writer, MemoryPolicy>::PushBlock(
+void BlockOutputStream<Block, Writer, MemoryPolicy>::push(
     Block* block)
 {
     if (block) {
@@ -79,7 +79,7 @@ void BlockOutputStream<Block, Writer, MemoryPolicy>::PushBlock(
 }
 
 template <typename Block, typename Writer, typename MemoryPolicy>
-void BlockOutputStream<Block, Writer, MemoryPolicy>::OutputLoop()
+void BlockOutputStream<Block, Writer, MemoryPolicy>::loop()
 {
     for (;;) {
         std::unique_lock<std::mutex> lck(m_mutex);
@@ -92,7 +92,7 @@ void BlockOutputStream<Block, Writer, MemoryPolicy>::OutputLoop()
             m_queue.pop();
             lck.unlock();
 
-            WriteBlock(block);
+            writeBlock(block);
         } else if (stopped_) {
             break;
         }
@@ -100,7 +100,7 @@ void BlockOutputStream<Block, Writer, MemoryPolicy>::OutputLoop()
 }
 
 template <typename Block, typename Writer, typename MemoryPolicy>
-void BlockOutputStream<Block, Writer, MemoryPolicy>::WriteBlock(
+void BlockOutputStream<Block, Writer, MemoryPolicy>::writeBlock(
     Block* block)
 {
     Writer::write(block);
