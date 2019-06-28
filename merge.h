@@ -1,8 +1,8 @@
 #pragma once
 
 #include "async_funcs.h"
-#include "util/output_stream.h"
-#include "util/input_stream.h"
+#include "util/outputstream.h"
+#include "util/inputstream.h"
 #include "util/utility.h"
 #include "sort_merge.h"
 

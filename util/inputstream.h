@@ -9,7 +9,7 @@
 namespace external_sort {
 
 template <typename Block, typename Reader, typename Memory>
-class BlockInputStream : public Reader, public Memory
+class InputStream : public Reader, public Memory
 {
 public:
     using BlockType  = Block;
@@ -43,22 +43,22 @@ private:
 };
 
 template <typename Block, typename Reader, typename Memory>
-void BlockInputStream<Block, Reader, Memory>::open()
+void InputStream<Block, Reader, Memory>::open()
 {
     this->open();
     empty_ = false;
-    tinput_ = std::thread(&BlockInputStream::loop, this);
+    tinput_ = std::thread(&InputStream::loop, this);
 }
 
 template <typename Block, typename Reader, typename Memory>
-void BlockInputStream<Block, Reader, Memory>::close()
+void InputStream<Block, Reader, Memory>::close()
 {
     this->close();
     tinput_.join();
 }
 
 template <typename Block, typename Reader, typename Memory>
-bool BlockInputStream<Block, Reader, Memory>::empty()
+bool InputStream<Block, Reader, Memory>::empty()
 {
     if (!m_block) {
         waitBlock();
@@ -67,14 +67,14 @@ bool BlockInputStream<Block, Reader, Memory>::empty()
 }
 
 template <typename Block, typename Reader, typename Memory>
-auto BlockInputStream<Block, Reader, Memory>::front()
+auto InputStream<Block, Reader, Memory>::front()
     -> typename Block::value_type&
 {
     return *m_blockIter;
 }
 
 template <typename Block, typename Reader, typename Memory>
-void BlockInputStream<Block, Reader, Memory>::pop()
+void InputStream<Block, Reader, Memory>::pop()
 {
     ++m_blockIter;
     if (m_blockIter == m_block->end()) {
@@ -85,20 +85,20 @@ void BlockInputStream<Block, Reader, Memory>::pop()
 }
 
 template <typename Block, typename Reader, typename Memory>
-auto BlockInputStream<Block, Reader, Memory>::block()
+auto InputStream<Block, Reader, Memory>::block()
     -> Block*
 {
     return m_block;
 }
 
 template <typename Block, typename Reader, typename Memory>
-void BlockInputStream<Block, Reader, Memory>::null()
+void InputStream<Block, Reader, Memory>::null()
 {
     m_block = nullptr;
 }
 
 template <typename Block, typename Reader, typename Memory>
-void BlockInputStream<Block, Reader, Memory>::loop()
+void InputStream<Block, Reader, Memory>::loop()
 {
     while (!Reader::empty()) {
         Block* block = read();
@@ -116,7 +116,7 @@ void BlockInputStream<Block, Reader, Memory>::loop()
 }
 
 template <typename Block, typename Reader, typename Memory>
-auto BlockInputStream<Block, Reader, Memory>::read()
+auto InputStream<Block, Reader, Memory>::read()
     -> Block*
 {
     Block* block = this->allocate();
@@ -131,7 +131,7 @@ auto BlockInputStream<Block, Reader, Memory>::read()
 }
 
 template <typename Block, typename Reader, typename Memory>
-void BlockInputStream<Block, Reader, Memory>::waitBlock()
+void InputStream<Block, Reader, Memory>::waitBlock()
 {
     std::unique_lock<std::mutex> lck(m_mtx);
     while (m_queue.empty() && !empty_) {

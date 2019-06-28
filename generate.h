@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util/output_stream.h"
+#include "util/outputstream.h"
 #include "util/utility.h"
 
 template <typename ValueType>

@@ -2,7 +2,7 @@
 
 #include "async_funcs.h"
 #include "type_aliases.h"
-#include "util/output_stream.h"
+#include "util/outputstream.h"
 
 //! External Split
 template <typename ValueType>

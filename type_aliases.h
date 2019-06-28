@@ -3,8 +3,8 @@
 #include "util/allocator.h"
 #include "util/filereader.h"
 #include "util/filewriter.h"
-#include "util/input_stream.h"
-#include "util/output_stream.h"
+#include "util/inputstream.h"
+#include "util/outputstream.h"
 #include "util/utility.h"
 
 #include <algorithm>
@@ -22,13 +22,13 @@ struct Types
     using BlockPool = typename BlockMemoryAllocator<Block>::BlockPool;
 
     // Stream Types
-    using IStream = BlockInputStream<Block,
-                                     FileReader<Block>,
-                                     BlockMemoryAllocator<Block>>;
+    using IStream = InputStream<Block,
+                                FileReader<Block>,
+                                BlockMemoryAllocator<Block>>;
 
-    using OStream = BlockOutputStream<Block,
-                                             FileWriter<Block>,
-                                             BlockMemoryAllocator<Block>>;
+    using OStream = OutputStream<Block,
+                                 FileWriter<Block>,
+                                 BlockMemoryAllocator<Block>>;
 
     using IStreamPtr = std::shared_ptr<IStream>;
     using OStreamPtr = std::shared_ptr<OStream>;

@@ -9,7 +9,7 @@
 namespace external_sort {
 
 template <typename Block, typename Writer, typename Memory>
-class BlockOutputStream : public Writer, public Memory
+class OutputStream : public Writer, public Memory
 {
 public:
     void open();
@@ -35,15 +35,15 @@ private:
 };
 
 template <typename Block, typename Writer, typename Memory>
-void BlockOutputStream<Block, Writer, Memory>::open()
+void OutputStream<Block, Writer, Memory>::open()
 {
     this->open();
     stopped_ = false;
-    toutput_ = std::thread(&BlockOutputStream::loop, this);
+    toutput_ = std::thread(&OutputStream::loop, this);
 }
 
 template <typename Block, typename Writer, typename Memory>
-void BlockOutputStream<Block, Writer, Memory>::close()
+void OutputStream<Block, Writer, Memory>::close()
 {
     push(m_block);
     stopped_ = true;
@@ -53,7 +53,7 @@ void BlockOutputStream<Block, Writer, Memory>::close()
 }
 
 template <typename Block, typename Writer, typename Memory>
-void BlockOutputStream<Block, Writer, Memory>::push(
+void OutputStream<Block, Writer, Memory>::push(
     const typename Block::value_type& value)
 {
     if (!m_block) {
@@ -68,7 +68,7 @@ void BlockOutputStream<Block, Writer, Memory>::push(
 }
 
 template <typename Block, typename Writer, typename Memory>
-void BlockOutputStream<Block, Writer, Memory>::push(
+void OutputStream<Block, Writer, Memory>::push(
     Block* block)
 {
     if (block) {
@@ -79,7 +79,7 @@ void BlockOutputStream<Block, Writer, Memory>::push(
 }
 
 template <typename Block, typename Writer, typename Memory>
-void BlockOutputStream<Block, Writer, Memory>::loop()
+void OutputStream<Block, Writer, Memory>::loop()
 {
     for (;;) {
         std::unique_lock<std::mutex> lck(m_mutex);
@@ -100,7 +100,7 @@ void BlockOutputStream<Block, Writer, Memory>::loop()
 }
 
 template <typename Block, typename Writer, typename Memory>
-void BlockOutputStream<Block, Writer, Memory>::writeBlock(
+void OutputStream<Block, Writer, Memory>::writeBlock(
     Block* block)
 {
     this->write(block);
