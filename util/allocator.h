@@ -5,6 +5,7 @@
 #include <atomic>
 #include <stack>
 #include <cassert>
+#include "aliases.h"
 
 namespace external_sort {
 

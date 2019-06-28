@@ -1,7 +1,7 @@
 #pragma once
 
 #include "async_funcs.h"
-#include "type_aliases.h"
+#include "util/aliases.h"
 #include "util/outputstream.h"
 
 //! External Split
@@ -11,9 +11,9 @@ void split(external_sort::SplitParams& params)
     using namespace external_sort;
     size_t file_cnt = 0;
 
-    external_sort::AsyncFuncs<typename Types<ValueType>::OStreamPtr> splits;
+    external_sort::AsyncFuncs<aliases::OStreamPtr<ValueType> > splits;
 
-    auto mem_pool = std::make_shared<typename Types<ValueType>::BlockPool>(
+    auto mem_pool = std::make_shared<aliases::BlockPool<ValueType> >(
         memsize_in_bytes(params.mem.size, params.mem.unit), params.mem.blocks);
 
     auto istream = std::make_shared<InputStream<std::vector<ValueType> > >();

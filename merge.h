@@ -5,6 +5,7 @@
 #include "util/inputstream.h"
 #include "util/utility.h"
 #include "sort_merge.h"
+#include "util/aliases.h"
 
 template <typename ValueType>
 void merge(external_sort::MergeParams& params)
@@ -12,7 +13,7 @@ void merge(external_sort::MergeParams& params)
     using namespace external_sort;
     size_t file_cnt = 0;
 
-    AsyncFuncs<typename Types<ValueType>::OStreamPtr> merges;
+    AsyncFuncs<aliases::OStreamPtr<ValueType> > merges;
 
     size_t mem_merge = memsize_in_bytes(params.mem.size, params.mem.unit) /
                        params.mrg.merges;
@@ -21,7 +22,7 @@ void merge(external_sort::MergeParams& params)
 
     auto files = params.mrg.ifiles;
     while (files.size() > 1 || !merges.empty()) {
-        std::unordered_set<typename Types<ValueType>::IStreamPtr> istreams;
+        std::unordered_set<aliases::IStreamPtr<ValueType > > istreams;
         while (istreams.size() < params.mrg.kmerge && !files.empty()) {
             auto is = std::make_shared<InputStream<std::vector<ValueType> > >();
             is->setPool(mem_istream, params.mrg.stmblocks);
@@ -37,8 +38,8 @@ void merge(external_sort::MergeParams& params)
             (params.mrg.tfile.size() ? params.mrg.tfile : params.mrg.ofile),
             DEF_MRG_TMP_SFX, ++file_cnt));
 
-        merges.addTask(&merge_streams<typename Types<ValueType>::IStreamPtr,
-                                    typename Types<ValueType>::OStreamPtr>,
+        merges.addTask(&merge_streams<aliases::IStreamPtr<ValueType>,
+                                      aliases::OStreamPtr<ValueType>>,
                      std::move(istreams), std::move(ostream));
 
         while ((files.size() < params.mrg.kmerge && !merges.empty()) ||
