@@ -8,8 +8,8 @@
 
 namespace external_sort {
 
-template <typename Block, typename Writer, typename Memory>
-class OutputStream : public Writer, public Memory
+template <typename Block>
+class OutputStream : public FileWriter<Block>, public Allocator<Block>
 {
 public:
     void open();
@@ -34,16 +34,16 @@ private:
     std::atomic<bool> stopped_ = {false};
 };
 
-template <typename Block, typename Writer, typename Memory>
-void OutputStream<Block, Writer, Memory>::open()
+template <typename Block>
+void OutputStream<Block>::open()
 {
     this->open();
     stopped_ = false;
     toutput_ = std::thread(&OutputStream::loop, this);
 }
 
-template <typename Block, typename Writer, typename Memory>
-void OutputStream<Block, Writer, Memory>::close()
+template <typename Block>
+void OutputStream<Block>::close()
 {
     push(m_block);
     stopped_ = true;
@@ -52,9 +52,8 @@ void OutputStream<Block, Writer, Memory>::close()
     this->close();
 }
 
-template <typename Block, typename Writer, typename Memory>
-void OutputStream<Block, Writer, Memory>::push(
-    const typename Block::value_type& value)
+template <typename Block>
+void OutputStream<Block>::push(const typename Block::value_type& value)
 {
     if (!m_block) {
         m_block = this->allocate();
@@ -67,9 +66,8 @@ void OutputStream<Block, Writer, Memory>::push(
     }
 }
 
-template <typename Block, typename Writer, typename Memory>
-void OutputStream<Block, Writer, Memory>::push(
-    Block* block)
+template <typename Block>
+void OutputStream<Block>::push(Block* block)
 {
     if (block) {
         std::unique_lock<std::mutex> lck(m_mutex);
@@ -78,8 +76,8 @@ void OutputStream<Block, Writer, Memory>::push(
     }
 }
 
-template <typename Block, typename Writer, typename Memory>
-void OutputStream<Block, Writer, Memory>::loop()
+template <typename Block>
+void OutputStream<Block>::loop()
 {
     for (;;) {
         std::unique_lock<std::mutex> lck(m_mutex);
@@ -99,8 +97,8 @@ void OutputStream<Block, Writer, Memory>::loop()
     }
 }
 
-template <typename Block, typename Writer, typename Memory>
-void OutputStream<Block, Writer, Memory>::writeBlock(
+template <typename Block>
+void OutputStream<Block>::writeBlock(
     Block* block)
 {
     this->write(block);

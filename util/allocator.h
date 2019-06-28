@@ -9,7 +9,7 @@
 namespace external_sort {
 
 template <typename Block>
-class BlockMemoryAllocator
+class Allocator
 {
 public:
     class BlockPool;

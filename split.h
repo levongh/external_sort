@@ -16,7 +16,7 @@ void split(external_sort::SplitParams& params)
     auto mem_pool = std::make_shared<typename Types<ValueType>::BlockPool>(
         memsize_in_bytes(params.mem.size, params.mem.unit), params.mem.blocks);
 
-    auto istream = std::make_shared<typename Types<ValueType>::IStream>();
+    auto istream = std::make_shared<InputStream<std::vector<ValueType> > >();
     istream->setPool(mem_pool);
     istream->setFilename(params.spl.ifile);
     istream->setFileRM(params.spl.rm_input);
@@ -30,7 +30,7 @@ void split(external_sort::SplitParams& params)
         auto block = istream->block();
         istream->null();
 
-        auto ostream = std::make_shared<typename Types<ValueType>::OStream>();
+        auto ostream = std::make_shared<OutputStream<std::vector<ValueType> > >();
         ostream->setPool(mem_pool);
         ostream->setFilename(
             createFileName(params.spl.ofile, DEF_SPL_TMP_SFX, ++file_cnt));

@@ -19,19 +19,10 @@ struct Types
     // Block Types
     using Block = std::vector<ValueType>;
     using BlockPtr = Block*;
-    using BlockPool = typename BlockMemoryAllocator<Block>::BlockPool;
+    using BlockPool = typename Allocator<Block>::BlockPool;
 
-    // Stream Types
-    using IStream = InputStream<Block,
-                                FileReader<Block>,
-                                BlockMemoryAllocator<Block>>;
-
-    using OStream = OutputStream<Block,
-                                 FileWriter<Block>,
-                                 BlockMemoryAllocator<Block>>;
-
-    using IStreamPtr = std::shared_ptr<IStream>;
-    using OStreamPtr = std::shared_ptr<OStream>;
+    using IStreamPtr = std::shared_ptr<InputStream<Block> >;
+    using OStreamPtr = std::shared_ptr<OutputStream<Block> >;
 };
 
 template <typename ValueType>

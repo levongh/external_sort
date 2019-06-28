@@ -1,6 +1,5 @@
-
 template <typename Block>
-class BlockMemoryAllocator<Block>::BlockPool
+class Allocator<Block>::BlockPool
 {
 public:
     BlockPool(size_t memsize, size_t memblocks)
