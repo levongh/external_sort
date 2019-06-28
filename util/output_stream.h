@@ -8,8 +8,8 @@
 
 namespace external_sort {
 
-template <typename Block, typename Writer, typename MemoryPolicy>
-class BlockOutputStream : public Writer, public MemoryPolicy
+template <typename Block, typename Writer, typename Memory>
+class BlockOutputStream : public Writer, public Memory
 {
 public:
     void open();
@@ -34,30 +34,30 @@ private:
     std::atomic<bool> stopped_ = {false};
 };
 
-template <typename Block, typename Writer, typename MemoryPolicy>
-void BlockOutputStream<Block, Writer, MemoryPolicy>::open()
+template <typename Block, typename Writer, typename Memory>
+void BlockOutputStream<Block, Writer, Memory>::open()
 {
-    Writer::open();
+    this->open();
     stopped_ = false;
     toutput_ = std::thread(&BlockOutputStream::loop, this);
 }
 
-template <typename Block, typename Writer, typename MemoryPolicy>
-void BlockOutputStream<Block, Writer, MemoryPolicy>::close()
+template <typename Block, typename Writer, typename Memory>
+void BlockOutputStream<Block, Writer, Memory>::close()
 {
     push(m_block);
     stopped_ = true;
     m_cv.notify_one();
     toutput_.join();
-    Writer::close();
+    this->close();
 }
 
-template <typename Block, typename Writer, typename MemoryPolicy>
-void BlockOutputStream<Block, Writer, MemoryPolicy>::push(
+template <typename Block, typename Writer, typename Memory>
+void BlockOutputStream<Block, Writer, Memory>::push(
     const typename Block::value_type& value)
 {
     if (!m_block) {
-        m_block = MemoryPolicy::allocate();
+        m_block = this->allocate();
     }
     m_block->push_back(value);
 
@@ -67,8 +67,8 @@ void BlockOutputStream<Block, Writer, MemoryPolicy>::push(
     }
 }
 
-template <typename Block, typename Writer, typename MemoryPolicy>
-void BlockOutputStream<Block, Writer, MemoryPolicy>::push(
+template <typename Block, typename Writer, typename Memory>
+void BlockOutputStream<Block, Writer, Memory>::push(
     Block* block)
 {
     if (block) {
@@ -78,8 +78,8 @@ void BlockOutputStream<Block, Writer, MemoryPolicy>::push(
     }
 }
 
-template <typename Block, typename Writer, typename MemoryPolicy>
-void BlockOutputStream<Block, Writer, MemoryPolicy>::loop()
+template <typename Block, typename Writer, typename Memory>
+void BlockOutputStream<Block, Writer, Memory>::loop()
 {
     for (;;) {
         std::unique_lock<std::mutex> lck(m_mutex);
@@ -99,12 +99,12 @@ void BlockOutputStream<Block, Writer, MemoryPolicy>::loop()
     }
 }
 
-template <typename Block, typename Writer, typename MemoryPolicy>
-void BlockOutputStream<Block, Writer, MemoryPolicy>::writeBlock(
+template <typename Block, typename Writer, typename Memory>
+void BlockOutputStream<Block, Writer, Memory>::writeBlock(
     Block* block)
 {
-    Writer::write(block);
-    MemoryPolicy::free(block);
+    this->write(block);
+    this->free(block);
 }
 
 } // namespace external_sort

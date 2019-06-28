@@ -8,8 +8,8 @@
 
 namespace external_sort {
 
-template <typename Block, typename Reader, typename MemoryPolicy>
-class BlockInputStream : public Reader, public MemoryPolicy
+template <typename Block, typename Reader, typename Memory>
+class BlockInputStream : public Reader, public Memory
 {
 public:
     using BlockType  = Block;
@@ -42,23 +42,23 @@ private:
     std::atomic<bool> empty_ = {false};
 };
 
-template <typename Block, typename Reader, typename MemoryPolicy>
-void BlockInputStream<Block, Reader, MemoryPolicy>::open()
+template <typename Block, typename Reader, typename Memory>
+void BlockInputStream<Block, Reader, Memory>::open()
 {
-    Reader::open();
+    this->open();
     empty_ = false;
     tinput_ = std::thread(&BlockInputStream::loop, this);
 }
 
-template <typename Block, typename Reader, typename MemoryPolicy>
-void BlockInputStream<Block, Reader, MemoryPolicy>::close()
+template <typename Block, typename Reader, typename Memory>
+void BlockInputStream<Block, Reader, Memory>::close()
 {
-    Reader::close();
+    this->close();
     tinput_.join();
 }
 
-template <typename Block, typename Reader, typename MemoryPolicy>
-bool BlockInputStream<Block, Reader, MemoryPolicy>::empty()
+template <typename Block, typename Reader, typename Memory>
+bool BlockInputStream<Block, Reader, Memory>::empty()
 {
     if (!m_block) {
         waitBlock();
@@ -66,39 +66,39 @@ bool BlockInputStream<Block, Reader, MemoryPolicy>::empty()
     return empty_ && !m_block;
 }
 
-template <typename Block, typename Reader, typename MemoryPolicy>
-auto BlockInputStream<Block, Reader, MemoryPolicy>::front()
+template <typename Block, typename Reader, typename Memory>
+auto BlockInputStream<Block, Reader, Memory>::front()
     -> typename Block::value_type&
 {
     return *m_blockIter;
 }
 
-template <typename Block, typename Reader, typename MemoryPolicy>
-void BlockInputStream<Block, Reader, MemoryPolicy>::pop()
+template <typename Block, typename Reader, typename Memory>
+void BlockInputStream<Block, Reader, Memory>::pop()
 {
     ++m_blockIter;
     if (m_blockIter == m_block->end()) {
         auto tmp = m_block;
         null();
-        MemoryPolicy::free(tmp);
+        this->free(tmp);
     }
 }
 
-template <typename Block, typename Reader, typename MemoryPolicy>
-auto BlockInputStream<Block, Reader, MemoryPolicy>::block()
+template <typename Block, typename Reader, typename Memory>
+auto BlockInputStream<Block, Reader, Memory>::block()
     -> Block*
 {
     return m_block;
 }
 
-template <typename Block, typename Reader, typename MemoryPolicy>
-void BlockInputStream<Block, Reader, MemoryPolicy>::null()
+template <typename Block, typename Reader, typename Memory>
+void BlockInputStream<Block, Reader, Memory>::null()
 {
     m_block = nullptr;
 }
 
-template <typename Block, typename Reader, typename MemoryPolicy>
-void BlockInputStream<Block, Reader, MemoryPolicy>::loop()
+template <typename Block, typename Reader, typename Memory>
+void BlockInputStream<Block, Reader, Memory>::loop()
 {
     while (!Reader::empty()) {
         Block* block = read();
@@ -115,23 +115,23 @@ void BlockInputStream<Block, Reader, MemoryPolicy>::loop()
     m_cv.notify_one();
 }
 
-template <typename Block, typename Reader, typename MemoryPolicy>
-auto BlockInputStream<Block, Reader, MemoryPolicy>::read()
+template <typename Block, typename Reader, typename Memory>
+auto BlockInputStream<Block, Reader, Memory>::read()
     -> Block*
 {
-    Block* block = MemoryPolicy::allocate();
+    Block* block = this->allocate();
 
     Reader::read(block);
     if (block->empty()) {
-        MemoryPolicy::free(block);
+        this->free(block);
         block = nullptr;
     }
 
     return block;
 }
 
-template <typename Block, typename Reader, typename MemoryPolicy>
-void BlockInputStream<Block, Reader, MemoryPolicy>::waitBlock()
+template <typename Block, typename Reader, typename Memory>
+void BlockInputStream<Block, Reader, Memory>::waitBlock()
 {
     std::unique_lock<std::mutex> lck(m_mtx);
     while (m_queue.empty() && !empty_) {

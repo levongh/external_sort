@@ -2,8 +2,8 @@
 
 namespace external_sort {
 
-template <typename InputStream, typename OutputStream>
-void copy_stream(InputStream* sin, OutputStream* sout)
+template <typename IStream, typename OStream>
+void copy_stream(IStream* sin, OStream* sout)
 {
     while (!sin->empty()) {
         sout->push(sin->front());
@@ -11,17 +11,17 @@ void copy_stream(InputStream* sin, OutputStream* sout)
     }
 }
 
-template <typename InputStream, typename OutputStream, typename Comparator>
-void merge_2streams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
+template <typename IStream, typename OStream, typename Comparator>
+void merge_2streams(std::unordered_set<IStream*>& sin, OStream* sout,
                     Comparator comp)
 {
     if (sin.size() != 2) {
         return;
     }
     auto it = sin.begin();
-    InputStream* s1 = *(it++);
-    InputStream* s2 = *(it++);
-    InputStream* smin = s1;
+    IStream* s1 = *(it++);
+    IStream* s2 = *(it++);
+    IStream* smin = s1;
 
     for (;;) {
         smin = comp(s1->front(), s2->front()) ? s1 : s2;
@@ -35,18 +35,18 @@ void merge_2streams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
     copy_stream(*sin.begin(), sout);
 }
 
-template <typename InputStream, typename OutputStream, typename Comparator>
-void merge_3streams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
+template <typename IStream, typename OStream, typename Comparator>
+void merge_3streams(std::unordered_set<IStream*>& sin, OStream* sout,
                     Comparator comp)
 {
     if (sin.size() != 3) {
         return;
     }
     auto it = sin.begin();
-    InputStream* s1 = *(it++);
-    InputStream* s2 = *(it++);
-    InputStream* s3 = *(it++);
-    InputStream* smin = s1;
+    IStream* s1 = *(it++);
+    IStream* s2 = *(it++);
+    IStream* s3 = *(it++);
+    IStream* smin = s1;
 
     for (;;) {
         if (comp(s1->front(),s2->front())) {
@@ -65,19 +65,19 @@ void merge_3streams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
 }
 
 // merges 4 streams
-template <typename InputStream, typename OutputStream, typename Comparator>
-void merge_4streams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
+template <typename IStream, typename OStream, typename Comparator>
+void merge_4streams(std::unordered_set<IStream*>& sin, OStream* sout,
                     Comparator comp)
 {
     if (sin.size() != 4) {
         return;
     }
     auto it = sin.begin();
-    InputStream* s1 = *(it++);
-    InputStream* s2 = *(it++);
-    InputStream* s3 = *(it++);
-    InputStream* s4 = *(it++);
-    InputStream* smin = s1;
+    IStream* s1 = *(it++);
+    IStream* s2 = *(it++);
+    IStream* s3 = *(it++);
+    IStream* s4 = *(it++);
+    IStream* smin = s1;
 
     for (;;) {
         if (comp(s1->front(), s2->front())) {
@@ -101,21 +101,21 @@ void merge_4streams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
     merge_3streams(sin, sout, comp);
 }
 
-template <typename InputStream, typename OutputStream, typename Comparator>
-void merge_nstreams(std::unordered_set<InputStream*>& sin, OutputStream* sout,
+template <typename IStream, typename OStream, typename Comparator>
+void merge_nstreams(std::unordered_set<IStream*>& sin, OStream* sout,
                     Comparator comp)
 {
     if (sin.size() <= 4) {
         return;
     }
-    InputStream* smin;
-    std::vector<InputStream*> heap;
+    IStream* smin;
+    std::vector<IStream*> heap;
     for (auto& s : sin) {
         if (!s->empty()) {
             heap.push_back(s);
         }
     }
-    auto hcomp = [ &comp ] (InputStream*& s1, InputStream*& s2) {
+    auto hcomp = [ &comp ] (IStream*& s1, IStream*& s2) {
         return comp(s2->front(), s1->front());
     };
     std::make_heap(heap.begin(), heap.end(), hcomp);
