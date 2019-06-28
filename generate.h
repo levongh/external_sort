@@ -12,7 +12,7 @@ void generate(const external_sort::GenerateParams& params)
         sizeof(ValueType);
 
     auto ostream = std::make_shared<typename Types<ValueType>::OStream>();
-    ostream->set_mem_pool(memsize_in_bytes(params.mem.size, params.mem.unit),
+    ostream->setPool(memsize_in_bytes(params.mem.size, params.mem.unit),
             params.mem.blocks);
     ostream->setFilename(params.gen.ofile);
     ostream->open();

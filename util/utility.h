@@ -15,44 +15,44 @@ enum MemUnit
 
 struct MemParams
 {
-    size_t  size   = 10;                // memory size
-    MemUnit unit   = MB;                // memory unit
-    size_t  blocks = 2;                 // number of blocks memory is divided by
+    size_t  size   = 10;
+    MemUnit unit   = MB;
+    size_t  blocks = 2;
 };
 
 struct SplitParams
 {
-    MemParams mem;                      // memory params
+    MemParams mem;
     struct {
-        std::string ifile;              // input file to split
-        std::string ofile;              // output file prefix (prefix of splits)
-        bool rm_input = false;          // ifile should be removed when done?
+        std::string ifile;
+        std::string ofile;
+        bool rm_input = false;
     } spl;
     struct {
-        std::list<std::string> ofiles;  // list of output files (splits)
+        std::list<std::string> ofiles;
     } out;
 };
 
 struct MergeParams
 {
-    MemParams mem;                      // memory params
+    MemParams mem;
     struct {
-        size_t merges    = 4;           // number of simultaneous merges
-        size_t kmerge    = 4;           // number of streams to merge at a time
-        size_t stmblocks = 2;           // number of memory blocks per stream
-        std::list<std::string> ifiles;  // list of input files to merge
-        std::string tfile;              // prefix for temporary files
-        std::string ofile;              // output file (the merge result)
-        bool rm_input = true;           // ifile should be removed when done?
+        size_t merges    = 4;
+        size_t kmerge    = 4;
+        size_t stmblocks = 2;
+        std::list<std::string> ifiles;
+        std::string tfile;
+        std::string ofile;
+        bool rm_input = true;
     } mrg;
 };
 
 struct GenerateParams
 {
-    MemParams mem;                      // memory params
+    MemParams mem;
     struct {
-        size_t fsize = 0;               // file size to generate (in mem.units)
-        std::string ofile;              // output file
+        size_t fsize = 0;
+        std::string ofile;
     } gen;
 };
 
@@ -89,7 +89,7 @@ SizeType memsize_in_bytes(const SizeType& memsize, const MemUnit& u)
 }
 
 template <typename IndexType>
-std::string make_tmp_filename(const std::string& prefix,
+std::string createFileName(const std::string& prefix,
                               const std::string& suffix,
                               const IndexType& index)
 {

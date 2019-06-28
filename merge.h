@@ -24,7 +24,7 @@ void merge(external_sort::MergeParams& params)
         std::unordered_set<typename Types<ValueType>::IStreamPtr> istreams;
         while (istreams.size() < params.mrg.kmerge && !files.empty()) {
             auto is = std::make_shared<typename Types<ValueType>::IStream>();
-            is->set_mem_pool(mem_istream, params.mrg.stmblocks);
+            is->setPool(mem_istream, params.mrg.stmblocks);
             is->setFilename(files.front());
             is->setFileRM(params.mrg.rm_input);
             istreams.insert(is);
@@ -32,8 +32,8 @@ void merge(external_sort::MergeParams& params)
         }
 
         auto ostream = std::make_shared<typename Types<ValueType>::OStream>();
-        ostream->set_mem_pool(mem_ostream, params.mrg.stmblocks);
-        ostream->setFilename(make_tmp_filename(
+        ostream->setPool(mem_ostream, params.mrg.stmblocks);
+        ostream->setFilename(createFileName(
             (params.mrg.tfile.size() ? params.mrg.tfile : params.mrg.ofile),
             DEF_MRG_TMP_SFX, ++file_cnt));
 

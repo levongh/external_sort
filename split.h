@@ -17,7 +17,7 @@ void split(external_sort::SplitParams& params)
         memsize_in_bytes(params.mem.size, params.mem.unit), params.mem.blocks);
 
     auto istream = std::make_shared<typename Types<ValueType>::IStream>();
-    istream->set_mem_pool(mem_pool);
+    istream->setPool(mem_pool);
     istream->setFilename(params.spl.ifile);
     istream->setFileRM(params.spl.rm_input);
     istream->open();
@@ -31,9 +31,9 @@ void split(external_sort::SplitParams& params)
         istream->null();
 
         auto ostream = std::make_shared<typename Types<ValueType>::OStream>();
-        ostream->set_mem_pool(mem_pool);
+        ostream->setPool(mem_pool);
         ostream->setFilename(
-            make_tmp_filename(params.spl.ofile, DEF_SPL_TMP_SFX, ++file_cnt));
+            createFileName(params.spl.ofile, DEF_SPL_TMP_SFX, ++file_cnt));
         ostream->open();
 
         splits.addTask(&sort_and_write<ValueType>,

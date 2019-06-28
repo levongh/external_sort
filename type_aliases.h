@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util/memory_policy.h"
+#include "util/allocator.h"
 #include "util/filereader.h"
 #include "util/filewriter.h"
 #include "util/input_stream.h"
@@ -19,16 +19,16 @@ struct Types
     // Block Types
     using Block = std::vector<ValueType>;
     using BlockPtr = Block*;
-    using BlockPool = typename BlockMemoryPolicy<Block>::BlockPool;
+    using BlockPool = typename BlockMemoryAllocator<Block>::BlockPool;
 
     // Stream Types
     using IStream = BlockInputStream<Block,
                                      FileReader<Block>,
-                                     BlockMemoryPolicy<Block>>;
+                                     BlockMemoryAllocator<Block>>;
 
     using OStream = BlockOutputStream<Block,
                                              FileWriter<Block>,
-                                             BlockMemoryPolicy<Block>>;
+                                             BlockMemoryAllocator<Block>>;
 
     using IStreamPtr = std::shared_ptr<IStream>;
     using OStreamPtr = std::shared_ptr<OStream>;
