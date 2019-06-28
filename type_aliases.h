@@ -26,9 +26,10 @@ struct Types
 };
 
 template <typename ValueType>
-typename Types<ValueType>::OStreamPtr
-sort_and_write(typename Types<ValueType>::BlockPtr block,
-               typename Types<ValueType>::OStreamPtr ostream)
+std::shared_ptr<OutputStream<std::vector<ValueType> > >
+sort_and_write(
+               std::vector<ValueType>* block,
+               std::shared_ptr<OutputStream<std::vector<ValueType> > > ostream)
 {
     std::sort(block->begin(), block->end(), typename std::less<ValueType>());
     ostream->writeBlock(block);
