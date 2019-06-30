@@ -10,6 +10,7 @@
 template <typename ValueType>
 void merge(external_sort::MergeParams& params)
 {
+    const static std::string TMP_SUFFIX = "merge";
     using namespace external_sort;
     size_t file_cnt = 0;
 
@@ -36,7 +37,7 @@ void merge(external_sort::MergeParams& params)
         ostream->setPool(mem_ostream, params.mrg.stmblocks);
         ostream->setFilename(createFileName(
             (params.mrg.tfile.size() ? params.mrg.tfile : params.mrg.ofile),
-            DEF_MRG_TMP_SFX, ++file_cnt));
+            TMP_SUFFIX, ++file_cnt));
 
         merges.addTask(&merge_streams<aliases::IStreamPtr<ValueType>,
                                       aliases::OStreamPtr<ValueType>>,
@@ -56,7 +57,6 @@ void merge(external_sort::MergeParams& params)
     }
 }
 
-//! External Sort (= Split + Merge)
 template <typename ValueType>
 void sort(external_sort::SplitParams& sp, external_sort::MergeParams& mp)
 {

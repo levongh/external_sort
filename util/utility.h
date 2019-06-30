@@ -73,9 +73,6 @@ struct Generator
     }
 };
 
-const char* DEF_SPL_TMP_SFX = "split";
-const char* DEF_MRG_TMP_SFX = "merge";
-
 template <typename SizeType>
 SizeType memsize_in_bytes(const SizeType& memsize, const MemUnit& u)
 {

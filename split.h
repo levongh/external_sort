@@ -8,6 +8,7 @@
 template <typename ValueType>
 void split(external_sort::SplitParams& params)
 {
+    const static std::string TMP_SUFFIX = "split";
     using namespace external_sort;
     size_t file_cnt = 0;
 
@@ -33,7 +34,7 @@ void split(external_sort::SplitParams& params)
         auto ostream = std::make_shared<OutputStream<std::vector<ValueType> > >();
         ostream->setPool(mem_pool);
         ostream->setFilename(
-            createFileName(params.spl.ofile, DEF_SPL_TMP_SFX, ++file_cnt));
+            createFileName(params.spl.ofile, TMP_SUFFIX, ++file_cnt));
         ostream->open();
 
         splits.addTask(&sort_and_write<ValueType>,
