@@ -9,15 +9,15 @@
 namespace external_sort {
 
 template <typename ResultType>
-class AsyncFuncs
+class TaskSheduler
 {
 public:
     template <class Fn, class... Args>
-    void addTask(Fn&& fn, Args&&... args)
+    void shedule(Fn&& fn, Args&&... args)
     {
         std::unique_lock<std::mutex> lck(m_mutex);
         ++m_funcsRunning;
-        std::thread task(&AsyncFuncs::run<Fn, Args...>, this,
+        std::thread task(&TaskSheduler::run<Fn, Args...>, this,
                 std::forward<Fn>(fn), std::forward<Args>(args)...);
         task.detach();
     }

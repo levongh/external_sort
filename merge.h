@@ -1,6 +1,6 @@
 #pragma once
 
-#include "async_funcs.h"
+#include "tasksheduler.h"
 #include "util/outputstream.h"
 #include "util/inputstream.h"
 #include "util/utility.h"
@@ -10,11 +10,13 @@
 template <typename ValueType>
 void merge(external_sort::MergeParams& params)
 {
-    const static std::string TMP_SUFFIX = "merge";
     using namespace external_sort;
+    using namespace aliases;
+
+    const static std::string TMP_SUFFIX = "merge";
     size_t file_cnt = 0;
 
-    AsyncFuncs<aliases::OStreamPtr<ValueType> > merges;
+    TaskSheduler<OStreamPtr<ValueType> > merges;
 
     size_t mem_merge = memsize_in_bytes(params.mem.size, params.mem.unit) /
                        params.mrg.merges;
@@ -23,7 +25,7 @@ void merge(external_sort::MergeParams& params)
 
     auto files = params.mrg.ifiles;
     while (files.size() > 1 || !merges.empty()) {
-        std::unordered_set<aliases::IStreamPtr<ValueType > > istreams;
+        std::unordered_set<IStreamPtr<ValueType > > istreams;
         while (istreams.size() < params.mrg.kmerge && !files.empty()) {
             auto is = std::make_shared<InputStream<std::vector<ValueType> > >();
             is->setPool(mem_istream, params.mrg.stmblocks);
@@ -39,8 +41,8 @@ void merge(external_sort::MergeParams& params)
             (params.mrg.tfile.size() ? params.mrg.tfile : params.mrg.ofile),
             TMP_SUFFIX, ++file_cnt));
 
-        merges.addTask(&merge_streams<aliases::IStreamPtr<ValueType>,
-                                      aliases::OStreamPtr<ValueType>>,
+        merges.shedule(&merge_streams<IStreamPtr<ValueType>,
+                                      OStreamPtr<ValueType>>,
                      std::move(istreams), std::move(ostream));
 
         while ((files.size() < params.mrg.kmerge && !merges.empty()) ||

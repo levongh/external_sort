@@ -1,6 +1,6 @@
 #pragma once
 
-#include "async_funcs.h"
+#include "tasksheduler.h"
 #include "util/aliases.h"
 #include "util/outputstream.h"
 
@@ -8,13 +8,15 @@
 template <typename ValueType>
 void split(external_sort::SplitParams& params)
 {
-    const static std::string TMP_SUFFIX = "split";
     using namespace external_sort;
+    using namespace aliases;
+
+    const static std::string TMP_SUFFIX = "split";
     size_t file_cnt = 0;
 
-    external_sort::AsyncFuncs<aliases::OStreamPtr<ValueType> > splits;
+    TaskSheduler<OStreamPtr<ValueType> > splits;
 
-    auto mem_pool = std::make_shared<aliases::BlockPool<ValueType> >(
+    auto mem_pool = std::make_shared<BlockPool<ValueType> >(
         memsize_in_bytes(params.mem.size, params.mem.unit), params.mem.blocks);
 
     auto istream = std::make_shared<InputStream<std::vector<ValueType> > >();
@@ -37,7 +39,7 @@ void split(external_sort::SplitParams& params)
             createFileName(params.spl.ofile, TMP_SUFFIX, ++file_cnt));
         ostream->open();
 
-        splits.addTask(&sort_and_write<ValueType>,
+        splits.shedule(&sort_and_write<ValueType>,
                      std::move(block), std::move(ostream));
 
         while ((splits.ready() > 0) || (splits.running() && istream->empty())) {
