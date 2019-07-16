@@ -53,7 +53,7 @@ void InputStream<Block>::open()
 template <typename Block>
 void InputStream<Block>::close()
 {
-    this->close();
+    FileReader<Block>::close();
     tinput_.join();
 }
 
@@ -80,7 +80,7 @@ void InputStream<Block>::pop()
     if (m_blockIter == m_block->end()) {
         auto tmp = m_block;
         null();
-        this->free(tmp);
+        Allocator<Block>::free(tmp);
     }
 }
 
@@ -122,7 +122,7 @@ auto InputStream<Block>::read() -> Block*
 
     FileReader<Block>::read(block);
     if (block->empty()) {
-        this->free(block);
+        Allocator<Block>::free(block);
         block = nullptr;
     }
 

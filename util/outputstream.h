@@ -49,14 +49,14 @@ void OutputStream<Block>::close()
     stopped_ = true;
     m_cv.notify_one();
     toutput_.join();
-    this->close();
+    FileWriter<Block>::close();
 }
 
 template <typename Block>
 void OutputStream<Block>::push(const typename Block::value_type& value)
 {
     if (!m_block) {
-        m_block = this->allocate();
+        m_block = Allocator<Block>::allocate();
     }
     m_block->push_back(value);
 
@@ -101,8 +101,8 @@ template <typename Block>
 void OutputStream<Block>::writeBlock(
     Block* block)
 {
-    this->write(block);
-    this->free(block);
+    FileWriter<Block>::write(block);
+    Allocator<Block>::free(block);
 }
 
 } // namespace external_sort
