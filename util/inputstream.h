@@ -45,7 +45,7 @@ private:
 template <typename Block>
 void InputStream<Block>::open()
 {
-    this->open();
+    FileReader<Block>::open();
     empty_ = false;
     tinput_ = std::thread(&InputStream::loop, this);
 }

@@ -37,7 +37,7 @@ private:
 template <typename Block>
 void OutputStream<Block>::open()
 {
-    this->open();
+    FileWriter<Block>::open();
     stopped_ = false;
     toutput_ = std::thread(&OutputStream::loop, this);
 }
