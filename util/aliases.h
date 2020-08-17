@@ -13,7 +13,7 @@
 
 namespace external_sort {
 
-namespace aliases {
+namespace detail {
 
 template <typename T>
 using Block = std::vector<T>;
@@ -29,14 +29,13 @@ using OStreamPtr = Ptr<OutputStream<Block<T> > >;
 
 
 template <typename T>
-using BlockPool = typename Allocator<aliases::Block<T> >::BlockPool;
+using BlockPool = typename Allocator<Block<T> >::BlockPool;
 
 }
 template <typename ValueType>
-aliases::OStreamPtr<ValueType>
-sort_and_write(
-               aliases::Block<ValueType>* block,
-               aliases::OStreamPtr<ValueType> ostream)
+detail::OStreamPtr<ValueType>sort_and_write(
+               detail::Block<ValueType>* block,
+               detail::OStreamPtr<ValueType> ostream)
 {
     std::sort(block->begin(), block->end(), typename std::less<ValueType>());
     ostream->writeBlock(block);

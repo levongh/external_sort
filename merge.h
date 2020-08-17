@@ -11,7 +11,7 @@ template <typename ValueType>
 void merge(external_sort::MergeParams& params)
 {
     using namespace external_sort;
-    using namespace aliases;
+    using namespace detail;
 
     const static std::string TMP_SUFFIX = "merge";
     size_t file_cnt = 0;

@@ -9,7 +9,7 @@ template <typename ValueType>
 void split(external_sort::SplitParams& params)
 {
     using namespace external_sort;
-    using namespace aliases;
+    using namespace detail;
 
     const static std::string TMP_SUFFIX = "split";
     size_t file_cnt = 0;
